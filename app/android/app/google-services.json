@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "679488034391",
+    "firebase_url": "https://apptaxi-89d1b-default-rtdb.firebaseio.com",
+    "project_id": "apptaxi-89d1b",
+    "storage_bucket": "apptaxi-89d1b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:679488034391:android:21f0395d33c1a56dd5f512",
+        "android_client_info": {
+          "package_name": "com.example.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDTFeEQz-RdpsZelQQD_15ep9Pn-hyMdLk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:679488034391:android:5816ba6c9ae42ac0d5f512",
+        "android_client_info": {
+          "package_name": "com.example.memoire"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDTFeEQz-RdpsZelQQD_15ep9Pn-hyMdLk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
