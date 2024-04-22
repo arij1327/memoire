@@ -4,6 +4,7 @@ import 'package:app/components/network_utilities.dart';
 import 'package:app/constant.dart';
 import 'package:app/models/autocomplate_prediction.dart';
 import 'package:app/models/place_auto_complate_response.dart';
+import 'package:app/user/utilisateur.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -69,6 +70,9 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
        PlaceDetailResponse result = PlaceDetailResponse.fromJson(json.decode(response));
       double latitude = result.geometry.location.lat;
        double longitude = result.geometry.location.lng;
+       print("-------------------------------");
+       print(latitude);
+       print(longitude);
     }
   return {'longitude': longitude, 'latitude': latitude};
   }
@@ -76,9 +80,12 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
     if (_mapController != null) {
       _mapController!.animateCamera(
         CameraUpdate.newLatLng(
-          LatLng(latitude, longitude),
+          LatLng(latitude, longitude)
+          
         ),
+        
       );
+      Navigator.push(context, MaterialPageRoute(builder: (context)=>InterfacePage()));
     }
   }
 
@@ -96,6 +103,7 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
                 onChanged: (value) {
                   placeAutoComplete(value);
                   goToPlaceOnMap(latitude, longitude);
+                  
 
                 },
                 textInputAction: TextInputAction.search,

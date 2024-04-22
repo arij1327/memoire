@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:app/authentification/sign_in.dart';
 import 'package:app/chauffeur/chauffeur.dart';
 import 'package:app/chauffeur/profilechauffeur.dart';
+import 'package:app/user/utilisateur.dart';
 import 'package:app/widgets/backgroundimagelogin.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -16,20 +17,20 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({Key? key}) : super(key: key);
+class LoginuserPage extends StatefulWidget {
+  const LoginuserPage({Key? key}) : super(key: key);
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<LoginuserPage> createState() => _LoginuserPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginuserPageState extends State<LoginuserPage> {
   late TextEditingController _emailController;
   late TextEditingController _passwordController;
   late LatLng? _currentPositionchauff;
   bool _isSigningIn = false;
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  CollectionReference users = FirebaseFirestore.instance.collection('position');
+  CollectionReference users = FirebaseFirestore.instance.collection('user');
 
 GlobalKey<FormState>  formKey= GlobalKey<FormState>();
 
@@ -90,7 +91,7 @@ FirebaseMessaging.instance.onTokenRefresh.listen((event) {
       });
       print("User Added");
     } else {
-      print("Failed to add user: Current position is null");
+      print("Failed to add user: Current user is null");
     }
   } catch (error) {
     print("Failed to add user: $error");
@@ -204,10 +205,10 @@ FirebaseMessaging.instance.onTokenRefresh.listen((event) {
                                          );
                                          
                                         String? token = await FirebaseMessaging.instance.getToken();
-                                               await FirebaseFirestore.instance.collection('position').doc(credential.user!.uid).set({
+                                               await FirebaseFirestore.instance.collection('user').doc(credential.user!.uid).set({
                                        'email': _emailController.text,
                                                
-                                        "isAvailable": false,
+                                        
                                         "token":token
                                        
                                          // Add more f+ields as needed
@@ -289,7 +290,7 @@ FirebaseMessaging.instance.onTokenRefresh.listen((event) {
 
   // Once signed in, return the UserCredential
    await FirebaseAuth.instance.signInWithCredential(credential);
-    Navigator.pushReplacement(context,MaterialPageRoute(builder:(context)=>Chauff()));
+    Navigator.pushReplacement(context,MaterialPageRoute(builder:(context)=>InterfacePage()));
                                       },
                                       child: Text(_isSigningIn ? "Signing in..." : "Login with Google"),
                                     ),

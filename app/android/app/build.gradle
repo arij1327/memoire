@@ -1,5 +1,8 @@
 plugins {
     id "com.android.application"
+    // START: FlutterFire Configuration
+    id 'com.google.gms.google-services'
+    // END: FlutterFire Configuration
     id "kotlin-android"
     id "dev.flutter.flutter-gradle-plugin"
     id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
@@ -69,4 +72,8 @@ flutter {
 dependencies {
     implementation 'com.google.firebase:firebase-analytics:20.0.0'
     implementation 'com.google.firebase:firebase-messaging:<latest_version>'
+    implementation'com.google.firebase:firebase-auth:22.3.0'
+    implementation 'com.google.firebase:firebase-appcheck-debug:16.0.0'
+   
+   
 }

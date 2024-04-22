@@ -1,6 +1,8 @@
-import 'package:app/chauffeur/chauf.dart';
+import 'package:app/authentification/sign_in.dart';
+import 'package:app/chauffeur/chauffeur.dart';
 
 import 'package:app/user/utilisateur.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class homepage extends StatefulWidget {
@@ -19,8 +21,27 @@ class _homepageState extends State<homepage> {
           children: <Widget>[
             ElevatedButton(onPressed:(){Navigator.push(context,
              MaterialPageRoute(builder: (context)=>InterfacePage()),);} , child: Text("utilisateur")),
-                ElevatedButton(onPressed:(){Navigator.push(context,
-             MaterialPageRoute(builder: (context)=>Chauff()),);} , child: Text("chauffeur"))
+               ElevatedButton(
+  onPressed: () {
+    try {
+      print("Current user: ${FirebaseAuth.instance.currentUser}");
+      if (FirebaseAuth.instance.currentUser == null) {
+        print("User not logged in, navigating to signup page.");
+      Navigator.push(context,
+             MaterialPageRoute(builder: (context)=>signuppage()),);
+      } else {
+        print("User logged in, navigating to Chauff page.");
+        Navigator.push(context,
+             MaterialPageRoute(builder: (context)=>Chauff()),);
+      }
+    } catch (e) {
+      print("Error occurred: $e");
+    }
+  
+  },
+
+  child: Text("chauffeur")
+)
           ],
           
           

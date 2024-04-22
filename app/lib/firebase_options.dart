@@ -27,10 +27,7 @@ class DefaultFirebaseOptions {
       case TargetPlatform.macOS:
         return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -69,16 +66,29 @@ class DefaultFirebaseOptions {
     projectId: 'apptaxi-89d1b',
     databaseURL: 'https://apptaxi-89d1b-default-rtdb.firebaseio.com',
     storageBucket: 'apptaxi-89d1b.appspot.com',
+    iosClientId: '679488034391-qtp9o1o9teu1e6lb42ad97qitupio2vf.apps.googleusercontent.com',
     iosBundleId: 'com.example.app',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyBq0qdQejsgne_f24gxqswfxoo6HE_QcTE',
-    appId: '1:679488034391:ios:08349a9da0dd60c7d5f512',
+    appId: '1:679488034391:ios:a7303e0f883258e9d5f512',
     messagingSenderId: '679488034391',
     projectId: 'apptaxi-89d1b',
     databaseURL: 'https://apptaxi-89d1b-default-rtdb.firebaseio.com',
     storageBucket: 'apptaxi-89d1b.appspot.com',
-    iosBundleId: 'com.example.app.RunnerTests',
+    iosClientId: '679488034391-qtp9o1o9teu1e6lb42ad97qitupio2vf.apps.googleusercontent.com',
+    iosBundleId: 'com.example.app',
   );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyB2clA43AB1gIPYdQdvkPHOjCdurS98380',
+    appId: '1:679488034391:web:578f56926cce9e3bd5f512',
+    messagingSenderId: '679488034391',
+    projectId: 'apptaxi-89d1b',
+    authDomain: 'apptaxi-89d1b.firebaseapp.com',
+    databaseURL: 'https://apptaxi-89d1b-default-rtdb.firebaseio.com',
+    storageBucket: 'apptaxi-89d1b.appspot.com',
+  );
+
 }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:app/homepage.dart';
 
@@ -6,12 +8,10 @@ class ScreenPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Timer(Duration(seconds: 3), () {   Navigator.pushReplacementNamed(context, '/home');});
     return Scaffold(
-      body: InkWell(
-        onTap: () {
-          Navigator.pushReplacementNamed(context, '/home');
-        },
-        child: Container(
+      body: 
+         Container(
           decoration: BoxDecoration(
             image: DecorationImage(
               image: AssetImage("asset/splachsceen.jpeg"),
@@ -19,7 +19,7 @@ class ScreenPage extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
+      );
+  
   }
 }

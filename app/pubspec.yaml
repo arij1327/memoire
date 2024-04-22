@@ -48,6 +48,7 @@ dependencies:
   google_api_headers: ^1.6.0
   firebase_auth: ^4.17.5
   connectivity: ^3.0.6
+  
 
   
   google_sign_in: ^6.2.1
@@ -55,6 +56,19 @@ dependencies:
   shared_preferences: ^2.2.2
   firebase_messaging: ^14.7.19
   http: ^0.13.6
+  background_location: ^0.13.0
+  image_picker: ^1.0.7
+  intl_phone_number_input: ^0.7.4
+  intl_phone_field: ^3.2.0
+  firebase_storage: ^11.7.0
+  flutter_address_from_latlng: ^0.0.2
+  location_geocoder: ^1.0.5
+  country_picker: ^2.0.25
+  flutter_polyline_points: ^1.0.0
+  flutter_paypal_checkout: ^1.0.1
+  firebase_app_check: ^0.2.2+2
+ 
+  
   
 
 

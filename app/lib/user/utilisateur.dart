@@ -1,15 +1,28 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'package:app/getpointpolyline.dart';
+import 'package:app/location_search_screen.dart';
+import 'package:app/user/profileuser.dart';
+import 'package:app/user/searchplaces.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_address_from_latlng/flutter_address_from_latlng.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:google_api_headers/google_api_headers.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
+import 'package:app/constant.dart';
+
+
 
 
 
@@ -23,9 +36,15 @@ class InterfacePage extends StatefulWidget {
 
 class _InterfacePageState extends State<InterfacePage> {
 
+
+
+ 
+double searchwidth=400;
+ 
 Future<Object> _determinePosition() async {
   bool serviceEnabled;
   LocationPermission permission;
+ 
 
   // Test if location services are enabled.
   serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -61,14 +80,20 @@ if(permission==LocationPermission.whileInUse){
   print(position.longitude); 
   print("====================================");
  
-  
+   String formattedAddress = await FlutterAddressFromLatLng().getFormattedAddress(
+  latitude: position.latitude,
+  longitude: position.longitude,
+  googleApiKey: "AIzaSyC7ckSip1a_oVGM1y7nPSWGUdTEPbkANIA",);
+ print(formattedAddress);
+ 
     setState(() {
       _currentPosition = LatLng(position.latitude, position.longitude);
+    
     });
     markersList.add (Marker (markerId: const MarkerId ("0"), position: LatLng (_currentPosition!.latitude,_currentPosition!.longitude)));
 
     print(_currentPosition);
-        
+
 }
 
   // When we reach here, permissions are granted and we can
@@ -79,16 +104,26 @@ Set<Marker> markersList = {
   
 };
 
-  static const LatLng _initialPosition = LatLng(37.7749, -122.4194);
+  static const LatLng _initialPosition = LatLng(33.886740, 10.101340);
   final TextEditingController destinationController = TextEditingController();
   GoogleMapController? _mapController;
   static const LatLng sourceLocation = LatLng(37.33500926, -122.03272188);
+
+  double ?latuser;
+ double? longuser;
   LatLng? _currentPosition;
+  LatLng? _destinationposition;
+  bool draweropen= true;
+   int currentDriverIndex = 0;
+
+bool destinationChosen = false; 
   LatLng? l;
   LatLng? _currentPositionchauff;
   final double radiusInKm = 0.1;
+  double  _slidervalue=20.0;
+ int changechauff=0;
    // LatLng? _currentPositionchauff;
-   
+   bool selected= false;
 
   
   final homeScaffoldKey = GlobalKey<ScaffoldState>();
@@ -97,65 +132,271 @@ Set<Marker> markersList = {
 
   @override
   void initState() {
-    _determinePosition();
+  
     //getnotification();
+    _determinePosition();
 
     super.initState();
+  
     
     //_locationController = Location();
     /*getLocationUpdates();*/
+  FirebaseMessaging.onMessageOpenedApp.listen((message) { 
+    if (message.data['message']=="Driver a refusé votre course"){
+        currentDriverIndex=currentDriverIndex+1;
+    }
     
+  });
+  FirebaseMessaging.onMessage.listen((message) {
+    
+     if (message.data['message']=="Driver a refusé votre course"){
+      setState(() {
+       
+          currentDriverIndex=currentDriverIndex+1;
+    });}
+   });
   }
 
   @override
   void dispose() {
    // _locationController.dispose(); // Dispose location controller
     super.dispose();
+   
+    
   }
+  
   
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       key:homeScaffoldKey,
-      body: Column(
+      
+      drawer: Drawer( child:Column(children: [ ListTile(
+        leading: CircleAvatar(
+          child: Icon(Icons.person),
+        ),
+          title: Text("Votre Profile ",style: TextStyle(fontSize: 18),),
+
+          onTap: (){
+            Navigator.push(context, MaterialPageRoute(builder: (context)=>ProfileUser()));
+
+          },
+          
+        ), ListTile(
+          title: Text("Historique",style: TextStyle(fontSize: 18),),
+          onTap: (){
+          },
+          
+        )],),),
+      body: Stack(
         children: [
-          Expanded(
-            child: GoogleMap(
-              markers:  markersList,
+ GoogleMap(
               
+              markers:  markersList,
+              polylines: polylineSet,
+              zoomControlsEnabled: false,
+            myLocationButtonEnabled: true,
               initialCameraPosition: CameraPosition(
                 target: _initialPosition,
                 zoom: 15,
+                
               ),
               onMapCreated: (controller) {
                 setState(() {
                   _mapController = controller;
+                  
                 });
-              },
-            ),
-          ),
-  
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: destinationController,
-              onTap: () async {
-                // Navigate to search location screen
-                searchPlace();
-               
-              },
-              decoration: InputDecoration(
-                hintText: 'Enter destination',
-              ),
-            ),
-            
-          ),
         
-       ]));
+              },
+               
+              
+            ),
+             GestureDetector(
+               onTap:(){
+        if(!draweropen){
+          homeScaffoldKey.currentState!.openDrawer();     
+        }  else{
+          setState(() {
+            polylineSet.clear();
+            markersList.clear();
+      
+        destinationChosen = !destinationChosen;
+        
+      });
+      
+        }        } ,
+               child: Positioned(
+                  top: 5.0,
+                  left: 25.0,
+                  bottom: 20,
+                  child: Container(
+                    
+                    decoration:BoxDecoration(color: Colors.white,borderRadius: BorderRadius.circular(22.0),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black,blurRadius: 6.0,spreadRadius: 0.5,offset: Offset(0.7, 0.7))
+                    ]),
+                    child: CircleAvatar(
+                      backgroundColor: Colors.white,
+                      child: Icon((!destinationChosen)?Icons.menu:
+                      Icons.close,),
+                 
+                      
+                    ),
+                    
+                  ),
+                ),
+             ),
+            
+
+            (!destinationChosen)?
+            Positioned(
+              left: 0.0,
+              right: 0.0,
+              bottom: 0.0,
+              child: AnimatedContainer(
+                duration: Duration(milliseconds: 160),
+                child: Container(
+                  width: 400,
+                 
+                  decoration: BoxDecoration(
+                    color:  Colors.white,
+                    borderRadius: BorderRadius.only(
+                      
+                      topLeft: Radius.circular(18.0),
+                      topRight: Radius.circular(18.0),
+                    ),
+                    boxShadow: [
+      
+                    BoxShadow(
+                        color: Colors.black,
+                        blurRadius: 16.0,
+                        spreadRadius: 0.5,
+                        offset: Offset(0.7, 0.7),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 18.0, horizontal:24 ),
+           child: 
+                        TextField(
+                          controller: destinationController,
+                          onTap: () async {
+                       searchPlace();
+                          },
+                          decoration: InputDecoration(
+                            hintText: 'Enter destination',
+                            suffixIcon: Icon(Icons.search),
+                          ),
+                        )
+                        
+                       
+                  ))))
+                    
+              
+
+          :
+LayoutBuilder(
+  builder: (BuildContext context, BoxConstraints constraints) {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: findNearbyDrivers(),
+      builder: (BuildContext context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
+       
+          List<Map<String, dynamic>> nearbyDrivers = snapshot.data ?? [];
+          return DraggableScrollableSheet(
+            
+            initialChildSize: 0.3,
+            maxChildSize: 0.95,
+            minChildSize: 0.1,
+            builder: (BuildContext context, ScrollController scrollController) {
+              return DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black,
+                      blurRadius: 10,
+                      spreadRadius: 1,
+                      offset: Offset(0, 1),
+                    ),
+                  ],
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(22),
+                    topRight: Radius.circular(22),
+                  ),
+                ),
+                child: CustomScrollView(
+                  controller: scrollController,
+                  slivers: [
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (BuildContext context, int index) {
+                          
+                          Map<String, dynamic> driver = nearbyDrivers[index];
+                          return Column(
+                            children: [
+                       
+                    
+                              ListTile(
+                                onTap: (){
+
+                                  
+                                },
+                                
+                                title: Text(driver['driverGmail']),
+                                subtitle: Text('Distance: ${driver['prix']} '),
+                                  trailing: ElevatedButton(onPressed: (){
+                                    sendnotification("hello", "notification", driver['token']);
+                                  }, child: Text('Confirmer'))
+                          
+                                            
+                              ),
+                             
+                            ],
+                          );
+                        },
+                        childCount: nearbyDrivers.length,
+                      ),
+                    ),
+                   
+                  ],
+                ),
+              );
+            },
+          );
+        }
+        
+
+    );
+  },
+)
+
+      
+         ] ),
+    
+  
+          
+        
+      )
+  
+  ;
+          
+           
+        
+             
+         
+        
+   
         
       
     
   }
+
+
+
+
+
+
+
     void _requestPermissions() {
     FirebaseMessaging.instance.requestPermission(
       alert: true,
@@ -163,21 +404,45 @@ Set<Marker> markersList = {
       sound: true,
     );
   }
+
+Future getAdress()async{
+    Position position= await Geolocator.getCurrentPosition();
+   String formattedAddress = await FlutterAddressFromLatLng().getFormattedAddress(
+  latitude: position.latitude,
+  longitude: position.longitude,
+  googleApiKey: "AIzaSyC7ckSip1a_oVGM1y7nPSWGUdTEPbkANIA",);
+  return formattedAddress;
+}
  Future<void> sendnotification(title,messagee,token) async{
+ var formattedAddress = await getAdress();
+ 
+  
+  
+
+  
+  
  var headersList = {
+
  'Accept': '*/*',
  'Content-Type': 'application/json',
  'Authorization': 'key=AAAAnjSkllc:APA91bEHbLsmo9hyqylkEfBp1f0YYCjKfo6K6mQbB61Th1yYliWw0bvvnsLv05dJC_PIVsk4AX4_z8B6thDi8_8otTFdKV1Te6mnL1txjyhgZ7pGwTkMvg91i5Obp3kh64ah93d9KD4d' 
 };
 var url = Uri.parse('https://fcm.googleapis.com/fcm/send');
- 
+
+  String? token1 = await FirebaseMessaging.instance.getToken();
 
 var body = {
   "to": token,
   "notification": {
     "title":title,
-    "body":messagee 
-  }
+    "body":messagee ,
+    
+  },
+  "data":{
+     "token":token1,
+   "adress": formattedAddress
+
+    }
 };
 
 var req = http.Request('POST', url);
@@ -196,45 +461,63 @@ else {
 }
 }
 
- findNearbyDrivers(double userLatitude, double userLongitude, double radiusInKm) async {
+getAddressFromCoordinates()async{
+   Position position= await Geolocator.getCurrentPosition();
+   String formattedAddress = await FlutterAddressFromLatLng().getFormattedAddress(
+  latitude: position.latitude,
+  longitude: position.longitude,
+  googleApiKey: "AIzaSyC7ckSip1a_oVGM1y7nPSWGUdTEPbkANIA",
+  
+);
+return formattedAddress;
+}
+
+ 
+ Future<List<Map<String, dynamic>>> findNearbyDrivers() async {
+
+  
+  
+  
+  
+  
   var collection = FirebaseFirestore.instance.collection('position');
   var snapshots = await collection.get();
   List<Map<String,dynamic>> nearbyDrivers = [];
 
-  snapshots.docs.forEach((doc) {
-    var lat = doc.data()['latitude']; // Access fields directly from doc
-    var lng = doc.data()['longitude'];
-    var gmail=doc.data()['gmail'];
-    var tokench=doc.data()["token"];
+  snapshots.docs.forEach((doc) async {
+ var lat = doc.data()['lat']; 
+    var lng = doc.data()['long'];
+    var gmail=doc.data()['email'];
+    var availibility=doc.data()["isAvailable"];
+    var tokench=doc.data()['token'];
 
   if (lat != null && lng != null) {
-    double distance = Geolocator.distanceBetween(userLatitude, userLongitude, lat, lng);
+    double distance = Geolocator.distanceBetween(_currentPosition!.latitude, _currentPosition!.longitude, lat, lng);
     print("8888888888888888888888888888888888888888");
   print(distance);
       print("8888888888888888888888888888888888888888");
-      
+   
+ 
+ 
     nearbyDrivers.add({
       'driverGmail': gmail ,
-      'distance': distance,
+      'prix': distance,
       'token':tokench
+   
 
 });
- double minDistance = double.infinity;
+nearbyDrivers.sort((a, b)=> a['distance'].compareTo(b['distance']));
 
-var min =nearbyDrivers.reduce((value, element) => minDistance < value['distance'] ? value : element );
-if(distance<minDistance){
- sendnotification("your notification","hello",tokench);
-}
 
+
+
+  
   
 
  
-print("22222222222222222222222222222222");
-print(min);
 
-print("22222222222222222222222222222222");
   
-    
+   
 
   }
  });
@@ -273,31 +556,28 @@ print("22222222222222222222222222222222");
         radius: 10000000,
         types: [],
         strictbounds: false,
-        mode: Mode.overlay,
-        language: "fr",
-        decoration: InputDecoration(
-          hintText: 'Search',
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: BorderSide(
-              color: Colors.white,
-            ),
-          ),
-        ),
+        mode: Mode.overlay
+,        language: "fr",
+        
         components: [Component(Component.country, "tn")],
       );
+      
+      
       displayPrediction (p! ,homeScaffoldKey.currentState);
 
       if (p != null) {
         // Handle the selected prediction
         print("Selected: ${p.description}");
+        setState(() {
+        destinationChosen = true; // Step 2: Set destinationChosen to true
+      });
       }
     } catch (e) {
       print("Error occurred: $e");
     }
   }
 
-  Future<void> displayPrediction (Prediction p, ScaffoldState? currentState) async {
+  Future displayPrediction (Prediction p, ScaffoldState? currentState) async {
 GoogleMapsPlaces places = GoogleMapsPlaces (
 apiKey: "AIzaSyC7ckSip1a_oVGM1y7nPSWGUdTEPbkANIA",
 apiHeaders: await const GoogleApiHeaders().getHeaders ()
@@ -305,16 +585,35 @@ apiHeaders: await const GoogleApiHeaders().getHeaders ()
 PlacesDetailsResponse detail = await places.getDetailsByPlaceId (p.placeId!);
 final lat = detail.result.geometry!.location. lat;
 final lng = detail.result.geometry!.location. lng;
-markersList.clear();
-markersList.add (Marker (markerId: const MarkerId ("0"), position: LatLng (lat, lng)));
- if (_currentPosition != null) {findNearbyDrivers(_currentPosition!.latitude, _currentPosition!.longitude, radiusInKm)
+
+  _destinationposition=LatLng(lat,lng);
+
+
+markersList.add (Marker (markerId: const MarkerId ("1"), position: LatLng (lat, lng)));
+
+ if (_currentPosition != null) {
+  
+  getPolyline(_currentPosition!.latitude, _currentPosition!.longitude, lat, lng);
+  double dis =Geolocator.distanceBetween(_currentPosition!.latitude, _currentPosition!.longitude, _destinationposition!.latitude, _destinationposition!.longitude)
 ;
+  
+  findNearbyDrivers();
+ 
+
   print("Current position or radius is null");
+  
 }      
 
-setState (() {});
+setState (() {
+
+destinationChosen=true;
+});
 _mapController?.animateCamera (CameraUpdate.newLatLngZoom (LatLng (lat, lng), 14.0));
+
+
+
  }
+   
+ 
 
-}
-
+ }

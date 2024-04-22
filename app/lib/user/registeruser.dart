@@ -5,14 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-class signuppage extends StatefulWidget {
-  const signuppage({super.key});
+class RegisterUser extends StatefulWidget {
+  const RegisterUser({super.key});
 
   @override
-  State<signuppage> createState() => _signuppageState();
+  State<RegisterUser> createState() => _RegisterUserState();
 }
 
-class _signuppageState extends State<signuppage> {
+class _RegisterUserState extends State<RegisterUser> {
    bool _isSigningIn = false;
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
     TextEditingController _userController = TextEditingController();

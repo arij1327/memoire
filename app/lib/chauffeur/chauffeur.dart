@@ -1,10 +1,21 @@
+import 'dart:io';
+
 import 'package:app/authentification/login.dart';
 import 'package:app/authentification/sign_in.dart';
-import 'package:app/connectivity.dart';
+import 'package:app/chauffeur/profilechauffeur.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:connectivity/connectivity.dart';
+import 'package:country_picker/country_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:intl_phone_number_input/intl_phone_number_input.dart';
+import 'package:path/path.dart';
+
 
 class Chauff extends StatefulWidget {
   const Chauff({Key? key}) : super(key: key);
@@ -14,6 +25,18 @@ class Chauff extends StatefulWidget {
 }
 
 class _ChauffState extends State<Chauff> {
+  Country selectedCountry = Country(
+phoneCode: "216", 
+countryCode: "TN",
+e164Sc: 0,
+geographic: true,
+level: 1,
+name: "tunisia",
+example: "tunisia",
+displayName: "tunisia",
+displayNameNoCountryCode: "TN",
+e164Key: "",
+);
   final TextEditingController usernomController = TextEditingController();
   final TextEditingController userpreController = TextEditingController();
   final TextEditingController usernumController = TextEditingController();
@@ -43,20 +66,56 @@ class _ChauffState extends State<Chauff> {
 
   String? choosevalue;
   final List<String> models = ["Fiat", "Ford", "Hyundai", "KIA", "Peugeot", "Renault"];
+  File? _image;
+  String ? url;
+   getimage()async{
+    final  ImagePicker picker = ImagePicker();
+    final XFile?  image = await picker.pickImage(source:ImageSource.gallery);
+     
+     
+     
+      if (image != null) {
+        _image = File(image.path);
+        var imagename= basename(image!.path);
+        var refstorage =  FirebaseStorage.instance.ref(imagename);
+         
+         await refstorage.putFile(_image!);
+          url= await refstorage.getDownloadURL();
+      } else {
+        print('No image selected.');
+      }
+    
+    
+     setState(() {
+    
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return  Scaffold(
-      appBar: AppBar(actions: [ElevatedButton(onPressed: (){
-                      Navigator.push(context, MaterialPageRoute(builder: (context)=>signuppage()));
-
-      }, child: Text("login"))],),
+     
        drawer: Drawer(
-        child: ListTile(
-          title: Text("Profile Chauffeur"),
-          onTap: (){
-            Navigator.push(context, MaterialPageRoute(builder: (context)=>UserProfilePage()));
-          },
+        child: Column(
+          children: [
+            ListTile(
+              title: Text("Profile Chauffeur"),
+              onTap: (){
+                Navigator.push(context, MaterialPageRoute(builder: (context)=>UserProfilePage()));
+              },
+              
+            ),
+            ListTile(
+              title: Text("Se déconnecter"),
+              subtitle: Icon(Icons.exit_to_app),
+              onTap: (){
+              
+            Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+      
+              },
+              
+            ),
+          ],
         ),
         
         
@@ -65,6 +124,16 @@ class _ChauffState extends State<Chauff> {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
+                    GestureDetector(onTap: () {
+                      getimage();
+                    },
+                      child: CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.grey,
+                        backgroundImage: url!=null?FileImage(_image!):null,
+                        child: _image==null?Icon(Icons.camera_alt,size: 40,color: Colors.grey[400],):null
+                      ),
+                    ),
                     TextFormField(
                       controller: usernomController,
                       decoration: InputDecoration(
@@ -102,21 +171,9 @@ class _ChauffState extends State<Chauff> {
                         ),
                       ),
                       onTap: () {
-                        String key = usernumController.text;
+                        checkExistingTaxiNumber();
 
-  dbRef.child(key).onValue.listen((event) {
-if (event.snapshot.exists && key.isNotEmpty) {
-       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Numéro du taxi existe déjà"),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }else {
-      print("Numéro du taxi n'existe pas");
-    }
-  
-  });}
+                    }
                     ),
                     SizedBox(height: 20),
                     TextFormField(
@@ -130,6 +187,33 @@ if (event.snapshot.exists && key.isNotEmpty) {
                         ),
                       ),
                     ),
+                      SizedBox(height: 20),
+                 TextFormField(
+                      controller: usernumController,
+                      
+                      decoration: InputDecoration(
+                        prefixIcon: Container(
+                          padding: EdgeInsets.all(8.0),
+                          child: InkWell(onTap: () {
+                            showCountryPicker(context: context, onSelect: (value){
+                              setState(() {
+                                selectedCountry = value;
+                              });
+                            });
+                            
+                          },
+                          child: Text("${selectedCountry.flagEmoji} +${selectedCountry.phoneCode}",style:TextStyle(fontSize:20),),
+                        ),),
+                        labelText: 'Num',
+                        labelStyle: TextStyle(color: Colors.black),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: BorderSide(color: Colors.black),
+                        ),
+                      ),
+                    ),
+                  
+                    
                     SizedBox(height: 20),
                     DropdownButtonFormField<String>(
                       value: choosevalue ?? models.first,
@@ -171,61 +255,54 @@ if (event.snapshot.exists && key.isNotEmpty) {
             ),
           );
   }
-  Future<void> addUser() async {
+ 
 
-  
+ void checkExistingTaxiNumber() {
+  String taxiNumber = usernumController.text;
 
-      
-      await chauf.add({
-         'Nom': usernomController.text,
-      'Prénom': userpreController.text,
-      'Numéro du taxi': usernumController.text,
-      'Matricule': usermatController.text,
-      'Modèle': choosevalue
-       
-       
-       
-
-      });
-      print("User Added");
-  
-}
-
-  void checkExistingTaxiNumber() {
-          String key = usernumController.text;
-
-  dbRef.child(key).onValue.listen((event) {
-    if (event.snapshot.exists && key.isNotEmpty) {
-       ScaffoldMessenger.of(context).showSnackBar(
+  FirebaseFirestore.instance
+      .collection('chauffeur')
+      .where('Numéro du taxi', isEqualTo: taxiNumber)
+      .get()
+      .then((QuerySnapshot querySnapshot) {
+    if (querySnapshot.docs.isNotEmpty) {
+      // Le numéro de taxi existe déjà
+      ScaffoldMessenger.of(context as BuildContext).showSnackBar(
         SnackBar(
           content: Text("Numéro du taxi existe déjà"),
           duration: Duration(seconds: 2),
         ),
       );
     } else {
+      // Le numéro de taxi n'existe pas encore
       print("Numéro du taxi n'existe pas");
     }
+  }).catchError((error) {
+    print("Erreur lors de la recherche du numéro de taxi: $error");
+  });
+}
+  Future<void> addUser() async {
+
   
-  }
 
-                     );
-    
-  }
+      
+       await FirebaseFirestore.instance.collection('chauffeur').doc(FirebaseAuth.instance.currentUser!.uid).set({
+   'Nom': usernomController.text,
+      'Prénom': userpreController.text,
+      'Numéro du taxi': usernumController.text,
+      'Matricule': usermatController.text,
+      'Modèle': choosevalue,
+      'image':url
+       
+
+      // Add more fields as needed
+    });
+      print("User Added");
+  
+}
+
+
 
 }
 
-class ChauffImage extends StatelessWidget {
-  const ChauffImage({Key? key}) : super(key: key);
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage("asset/chauff.jpeg"),
-          fit: BoxFit.cover,
-        ),
-      ),
-    );
-  }
-}
