@@ -2,6 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 
 
+import 'package:app/authentification/login.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:http/http.dart' as http;
 import 'package:background_location/background_location.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -30,39 +33,51 @@ class _UserProfilePageState extends State<UserProfilePage> {
     super.initState();
 
 FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-  if(message.notification!=null){
-  print(message.data['adress']);
-}
-  
-  showDialog(context: context, builder: (context){
-    return  AlertDialog(content:Text('vous avez une course'),
-    actions: [TextButton(onPressed: (){
-    String token=message.data['token'];
-      sendnotification("Hello", "Driver a accepté votre course", token);
-    }, child: Text("Accepter"),),
-    TextButton(onPressed: (){
-      String token=message.data['token'];
-      sendnotification("Hello", "Driver a refusé votre course", token);
-       
-    
-    }, child: Text("Reffuser "),)],);
+  try {
+    if (message.notification != null) {
+     // print(message.data['adress']);
+      showDialog(
+        context: context, // Ensure 'context' is accessible in this scope
+        builder: (context) {
+          return AlertDialog(
+            content: Text('Vous avez une course'),
 
-  });
- 
-  
+            actions: [
+             Text(message.data['adress']),
+              TextButton(
+                onPressed: () {
+                  String token = message.data['token'];
+                  sendnotification("Hello", "Le chauffeur a accepté votre course", token);
+                },
+                child: Text("Accepter"),
+              ),
+              TextButton(
+                onPressed: () {
+                  String token = message.data['token'];
+                  sendnotification("Hello", "Le chauffeur a refusé votre course", token);
+                },
+                child: Text("Refuser"),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  } catch (e) {
+    print('Error handling FCM message: $e');
+  }
 });
   
  FirebaseMessaging.onMessage.listen((RemoteMessage message) async { 
-  
+  print('messsageeee');
 if(message.notification!=null){
 print(message.data['adress'])
 ;
-
-}
-
-     showDialog(context: context, builder: (context){
+ showDialog(context: context, builder: (context){
     return  AlertDialog(content:Text('vous avez une course'),
-    actions: [TextButton(onPressed: (){
+    actions: [
+       Text(message.data['adress']),
+      TextButton(onPressed: (){
     String token=message.data['token'];
       sendnotification("Hello", "Driver a accepté votre course", token);
     }, child: Text("Accepter"),),
@@ -74,12 +89,16 @@ print(message.data['adress'])
      }
     );
 
+}
+
+    
+
   });
   
    
     getDataUser();
   
-  _fetchAvailability();
+  fetchAvailability();
 
 _determinePosition();
     
@@ -135,10 +154,40 @@ else {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+     bottomNavigationBar: GNav(tabs: [
+       GButton(
+      icon: Icons.settings,
+      text: 'Setting',
+      onPressed: (){
+
+      },
+    ), GButton(
+      icon: Icons.star_rate,
+      text: 'Rating',
+    ),
+   
+  
+    GButton(
+      icon: Icons.exit_to_app,
+      text: " Déconnecter",
+      onPressed: (){
+        showDialog(context: context, builder: (context){
+          return AlertDialog(
+            title: Text("Déconnecter"),
+            content: Text("Voulez-vous vraiment vous déconnecter?"),
+            
+            actions: [TextButton(onPressed:()async {await FirebaseAuth.instance.signOut(); 
+
+
+   Navigator.push(context, MaterialPageRoute(builder: (context)=>LoginPage()));}, child: Text("Ok")),
+            TextButton(onPressed: (){}, child: Text("Annuler"))],
+          );
+        } );
+      },
+    )
+     ]),
       appBar: AppBar(
-        leading: IconButton(onPressed: (){
-          Navigator.pop(context);
-        }, icon: Icon(Icons.close)),
+        
         title: Text('Votre Profile'),
         actions: <Widget>[
           Switch(
@@ -155,16 +204,20 @@ else {
             inactiveThumbColor: Colors.grey,
             inactiveTrackColor: Colors.grey[300],
           ),
-        
-        ],
+      /*  IconButton(onPressed: ()async{
+await FirebaseAuth.instance.signOut(); 
+
+
+   Navigator.push(context, MaterialPageRoute(builder: (context)=>LoginPage()));  }, icon: Icon(Icons.exit_to_app)),
+      */  ],
       ),
       body: ListView.builder(itemBuilder: 
       (context,i) {
         return Column(
           children: [
-            CircleAvatar(
+           /* CircleAvatar(
               child:Image.network(data[i]['image']) ,
-            ),
+            ),*/
             
            Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -220,20 +273,20 @@ else {
       final String userId = user.uid;
       try {
         // Check if the document exists
-        final DocumentSnapshot docSnapshot = await FirebaseFirestore.instance
-            .collection('position')
-            .doc(FirebaseAuth.instance.currentUser!.uid)
+        final  DataSnapshot docSnapshot = await FirebaseDatabase.instance
+            .ref('position')
+            .child(FirebaseAuth.instance.currentUser!.uid)
             .get();
 
         if (docSnapshot.exists) {
           // Update the document
-          await docSnapshot.reference.update({'isAvailable': isAvailable
+          await docSnapshot.ref.update({'isAvailable': isAvailable
         
           });
           print("User availability updated successfully!");
         } else {
           // Create a new document
-          await FirebaseFirestore.instance.collection('position').doc(FirebaseAuth.instance.currentUser!.uid).set({
+          await FirebaseDatabase.instance.ref('position').child(FirebaseAuth.instance.currentUser!.uid).set({
             'Id_user': userId,
             'isAvailable': isAvailable,
           });
@@ -247,7 +300,7 @@ else {
 
 
 
-  Future<void> _fetchAvailability() async {
+  /*Future<void> _fetchAvailability() async {
     final User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       final String userId = user.uid;
@@ -271,8 +324,37 @@ else {
         print('Failed to get document: $error');
       }
     }
+  }*/
+Future<void> fetchAvailability() async {
+  final User? user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    try {
+      // Get the document
+      final DataSnapshot snapshot = await FirebaseDatabase.instance
+          .reference()
+          .child('position')
+          .child(user.uid)
+         .get();
+
+      // Check if the document exists
+      if (snapshot.value != null) {
+        final dynamic data = snapshot.value;
+        if (data is Map<dynamic, dynamic>) {
+          final bool isAvailable = data['isAvailable'] ?? false;
+          setState(() {
+            _isAvailable = isAvailable;
+          });
+        } else {
+          print('Invalid data format in snapshot');
+        }
+      } else {
+        print('Document does not exist in the database');
+      }
+    } catch (error) {
+      print('Failed to get document: $error');
+    }
   }
-  
+}
 
   void UpdateLocation(){
 
@@ -284,7 +366,7 @@ else {
     currentlong =location.longitude;
     Future.delayed( Duration(seconds: 2));
     timer=Timer.periodic(Duration(seconds: 10), (timer) { 
-          FirebaseFirestore.instance.collection('position').doc(FirebaseAuth.instance.currentUser!.uid).update({
+         FirebaseDatabase.instance.ref('position').child(FirebaseAuth.instance.currentUser!.uid).update({
     
    
        'lat':currentlat,
@@ -298,7 +380,7 @@ else {
   });
 
   }
-   getDataUser()async{
+  /* getDataUser()async{
    DocumentSnapshot documentSnapshot= await FirebaseFirestore.instance.collection("chauffeur").doc(FirebaseAuth.instance.currentUser!.uid).get();
   if (documentSnapshot.exists) {
         data.add(documentSnapshot.data());
@@ -308,5 +390,27 @@ else {
       } else {
         print("Document does not exist");
       }
+  }*/
+
+ // Import de la librairie Firebase Realtime Database
+
+Future<void> getDataUser() async {
+  DatabaseReference ref = FirebaseDatabase.instance.reference().child("chauffeur").child(FirebaseAuth.instance.currentUser!.uid);
+
+  // Fetch data once
+  DataSnapshot snapshot = await ref.get();
+
+  if (snapshot.value != null) {
+    // Data exists, add it to your list or use it as needed
+    dynamic data1 = snapshot.value;
+data.add(data1);    
+
+    setState(() {
+      // Update the UI with the retrieved data if necessary
+    });
+  } else {
+    print("Document does not exist");
   }
+}
+
 }

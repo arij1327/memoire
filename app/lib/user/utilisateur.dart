@@ -4,9 +4,9 @@ import 'dart:math';
 import 'package:app/getpointpolyline.dart';
 import 'package:app/location_search_screen.dart';
 import 'package:app/user/profileuser.dart';
-import 'package:app/user/searchplaces.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +14,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_address_from_latlng/flutter_address_from_latlng.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_api_headers/google_api_headers.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -141,20 +142,90 @@ bool destinationChosen = false;
     
     //_locationController = Location();
     /*getLocationUpdates();*/
-  FirebaseMessaging.onMessageOpenedApp.listen((message) { 
-    if (message.data['message']=="Driver a refusé votre course"){
-        currentDriverIndex=currentDriverIndex+1;
+ 
+  FirebaseMessaging.onMessage.listen((message) {
+    print("refuse");
+     if (message.notification!.body=="Le chauffeur a refusé votre course"){
+
+ 
+       setState(() {
+                  currentDriverIndex = currentDriverIndex+1;
+
+       });
     }
+   });
+   FirebaseMessaging.onMessageOpenedApp.listen((message) { 
+    
+    if (message.notification!.body=="Le chauffeur a refusé votre course"){
+        
+        setState(() {
+                   currentDriverIndex = currentDriverIndex+1;
+
+        });
+      
+    }
+ 
     
   });
-  FirebaseMessaging.onMessage.listen((message) {
-    
-     if (message.data['message']=="Driver a refusé votre course"){
-      setState(() {
-       
-          currentDriverIndex=currentDriverIndex+1;
-    });}
-   });
+  FirebaseMessaging.onMessageOpenedApp.listen((message) {
+       if(message.notification!.body=="Le chauffeur a accepté votre course"){
+      showDialog(context: context, builder: (context){
+        return AlertDialog(
+          title: Text("Chisissez votre payment"),
+          content: Column(
+            children: [
+          RadioListTile(value: 1, groupValue: 1, onChanged: (val){},
+          title: Text("Espèce"),
+          subtitle: Text("Payez en espèces au lieu de déspose"),
+            
+            
+           
+          ),
+          RadioListTile(value: 2, groupValue: 2, onChanged: (val){
+            
+          },
+          title: Text("Paypal"),
+          subtitle: Text("Payez avec Paypal"),)
+            ],
+          ),
+          actions: [TextButton(onPressed: (){
+
+          }, child: Text("Confirmer"))],);
+          
+      }
+      );
+    }
+  });
+    FirebaseMessaging.onMessage.listen((message) {
+       if(message.notification!.body=="Le chauffeur a accepté votre course"){
+      showDialog(context: context, builder: (context){
+        return AlertDialog(
+          title: Text("Chisissez votre payment"),
+          content: Column(
+            children: [
+          RadioListTile(value: 1, groupValue: 1, onChanged: (val){},
+          title: Text("Espèce"),
+          subtitle: Text("Payez en espèces au lieu de déspose"),
+            
+            
+           
+          ),
+          RadioListTile(value: 2, groupValue: 2, onChanged: (val){
+            
+          },
+          title: Text("Paypal"),
+          subtitle: Text("Payez avec Paypal"),)
+            ],
+          ),
+          actions: [TextButton(onPressed: (){
+
+          }, child: Text("Confirmer"))],);
+          
+      }
+      );
+    }
+  });
+  
   }
 
   @override
@@ -331,16 +402,15 @@ LayoutBuilder(
                       delegate: SliverChildBuilderDelegate(
                         (BuildContext context, int index) {
                           
-                          Map<String, dynamic> driver = nearbyDrivers[index];
+                          Map<String, dynamic> driver = nearbyDrivers[currentDriverIndex];
                           return Column(
                             children: [
                        
+                
                     
                               ListTile(
-                                onTap: (){
 
-                                  
-                                },
+                              
                                 
                                 title: Text(driver['driverGmail']),
                                 subtitle: Text('Distance: ${driver['prix']} '),
@@ -354,7 +424,7 @@ LayoutBuilder(
                             ],
                           );
                         },
-                        childCount: nearbyDrivers.length,
+                        childCount: 1,
                       ),
                     ),
                    
@@ -376,9 +446,9 @@ LayoutBuilder(
   
           
         
-      )
+      );
   
-  ;
+
           
            
         
@@ -425,7 +495,8 @@ Future getAdress()async{
 
  'Accept': '*/*',
  'Content-Type': 'application/json',
- 'Authorization': 'key=AAAAnjSkllc:APA91bEHbLsmo9hyqylkEfBp1f0YYCjKfo6K6mQbB61Th1yYliWw0bvvnsLv05dJC_PIVsk4AX4_z8B6thDi8_8otTFdKV1Te6mnL1txjyhgZ7pGwTkMvg91i5Obp3kh64ah93d9KD4d' 
+ 'Authorization': 
+ 'key=AAAAnjSkllc:APA91bEHbLsmo9hyqylkEfBp1f0YYCjKfo6K6mQbB61Th1yYliWw0bvvnsLv05dJC_PIVsk4AX4_z8B6thDi8_8otTFdKV1Te6mnL1txjyhgZ7pGwTkMvg91i5Obp3kh64ah93d9KD4d' 
 };
 var url = Uri.parse('https://fcm.googleapis.com/fcm/send');
 
@@ -480,28 +551,30 @@ return formattedAddress;
   
   
   
-  var collection = FirebaseFirestore.instance.collection('position');
+  var collection = FirebaseDatabase.instance.ref('position');
   var snapshots = await collection.get();
   List<Map<String,dynamic>> nearbyDrivers = [];
+  dynamic data = snapshots.value;
 
-  snapshots.docs.forEach((doc) async {
- var lat = doc.data()['lat']; 
-    var lng = doc.data()['long'];
-    var gmail=doc.data()['email'];
-    var availibility=doc.data()["isAvailable"];
-    var tokench=doc.data()['token'];
+  data.forEach((key, value) async {
+  var lat = value['lat']; 
+  var lng = value['long'];
+  var gmail = value['email'];
+  var availibility = value["isAvailable"];
+  var tokench = value['token']; 
 
   if (lat != null && lng != null) {
     double distance = Geolocator.distanceBetween(_currentPosition!.latitude, _currentPosition!.longitude, lat, lng);
     print("8888888888888888888888888888888888888888");
   print(distance);
       print("8888888888888888888888888888888888888888");
-   
- 
+    double  dis =Geolocator.distanceBetween(_currentPosition!.latitude, _currentPosition!.longitude, _destinationposition!.latitude, _destinationposition!.longitude);
+ double prix= (distance+dis)/1000;
+ double prixcource =prix*900;
  
     nearbyDrivers.add({
       'driverGmail': gmail ,
-      'prix': distance,
+      'prix':distance,
       'token':tokench
    
 
@@ -593,8 +666,10 @@ markersList.add (Marker (markerId: const MarkerId ("1"), position: LatLng (lat, 
 
  if (_currentPosition != null) {
   
+
   getPolyline(_currentPosition!.latitude, _currentPosition!.longitude, lat, lng);
-  double dis =Geolocator.distanceBetween(_currentPosition!.latitude, _currentPosition!.longitude, _destinationposition!.latitude, _destinationposition!.longitude)
+
+  double  dis =Geolocator.distanceBetween(_currentPosition!.latitude, _currentPosition!.longitude, _destinationposition!.latitude, _destinationposition!.longitude)
 ;
   
   findNearbyDrivers();
@@ -613,7 +688,58 @@ _mapController?.animateCamera (CameraUpdate.newLatLngZoom (LatLng (lat, lng), 14
 
 
  }
-   
- 
+   Set<Polyline> polylineSet = {};
+List<LatLng> polylineCo = [];
+PolylinePoints polylinePoints = PolylinePoints();
+
+ Future<void> getPolyline(lat, long, destLat, destLong) async {
+  String url =
+      "https://maps.googleapis.com/maps/api/directions/json?origin=$lat,$long&destination=$destLat,$destLong&key=$apiKey";
+  var response = await http.get(Uri.parse(url));
+  var responseBody = jsonDecode(response.body);
+
+  var point = responseBody['routes'][0]['overview_polyline']['points'];
+  List<PointLatLng> result = polylinePoints.decodePolyline(point);
+
+  if (result.isNotEmpty) {
+    result.forEach((PointLatLng pointLatLng) {
+      polylineCo.add(LatLng(pointLatLng.latitude, pointLatLng.longitude));
+    });
+  }
+
+  Polyline polyline = Polyline(
+    polylineId: PolylineId("polyline"),
+    color: Color(0xff3498db),
+    width: 5,
+    points: polylineCo,
+  );
+  polylineSet.add(polyline);
+
+  // Ajouter le marqueur de durée
+  if (polylineCo.length > 1) {
+    var midPointIndex = (polylineCo.length / 2).round();
+    var midPoint = polylineCo[midPointIndex];
+    var durationText =
+        responseBody['routes'][0]['legs'][0]['duration']['text'];
+
+    Marker durationMarker = Marker(
+      markerId: MarkerId("duration"),
+      position: midPoint,
+      infoWindow: InfoWindow(
+        title: 'Duration',
+        snippet: durationText,
+      ),
+    );
+    
+;
+    // Ajouter le marqueur à la liste des marqueurs
+    markersList.add(durationMarker);
+    // Mettre à jour la liste des marqueurs sur la carte
+    setState(() {
+      markersList = Set<Marker>.of(markersList);
+    });
+  }
+}
+
 
  }

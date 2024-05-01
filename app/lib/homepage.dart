@@ -1,5 +1,7 @@
+import 'package:app/authentification/login.dart';
 import 'package:app/authentification/sign_in.dart';
 import 'package:app/chauffeur/chauffeur.dart';
+import 'package:app/chauffeur/profilechauffeur.dart';
 
 import 'package:app/user/utilisateur.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -18,6 +20,7 @@ class _homepageState extends State<homepage> {
     return Scaffold(
        body: Center(
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             ElevatedButton(onPressed:(){Navigator.push(context,
              MaterialPageRoute(builder: (context)=>InterfacePage()),);} , child: Text("utilisateur")),
@@ -32,7 +35,7 @@ class _homepageState extends State<homepage> {
       } else {
         print("User logged in, navigating to Chauff page.");
         Navigator.push(context,
-             MaterialPageRoute(builder: (context)=>Chauff()),);
+             MaterialPageRoute(builder: (context)=>UserProfilePage()),);
       }
     } catch (e) {
       print("Error occurred: $e");
