@@ -125,6 +125,7 @@ bool destinationChosen = false;
  int changechauff=0;
    // LatLng? _currentPositionchauff;
    bool selected= false;
+    int selectedMethodePayment = 1;
 
   
   final homeScaffoldKey = GlobalKey<ScaffoldState>();
@@ -170,27 +171,36 @@ bool destinationChosen = false;
   FirebaseMessaging.onMessageOpenedApp.listen((message) {
        if(message.notification!.body=="Le chauffeur a accepté votre course"){
       showDialog(context: context, builder: (context){
-        return AlertDialog(
-          title: Text("Chisissez votre payment"),
-          content: Column(
-            children: [
-          RadioListTile(value: 1, groupValue: 1, onChanged: (val){},
-          title: Text("Espèce"),
-          subtitle: Text("Payez en espèces au lieu de déspose"),
-            
-            
-           
-          ),
-          RadioListTile(value: 2, groupValue: 2, onChanged: (val){
-            
-          },
-          title: Text("Paypal"),
-          subtitle: Text("Payez avec Paypal"),)
-            ],
-          ),
-          actions: [TextButton(onPressed: (){
-
-          }, child: Text("Confirmer"))],);
+        return Container(
+          
+          child: AlertDialog(
+            title: Text("Chisissez votre payment"),
+            content: Column(
+              children: [
+            RadioListTile(value: 1, groupValue: selectedMethodePayment, onChanged: (val){
+              setState(() {
+                selectedMethodePayment = val!;
+              });
+            },
+            title: Text("Espèce"),
+            subtitle: Text("Payez en espèces au lieu de déspose"),
+              
+              
+             
+            ),
+            RadioListTile(value: 2, groupValue: selectedMethodePayment, onChanged: (val){
+              setState(() {
+                selectedMethodePayment = val!;
+              });
+            },
+            title: Text("Paypal"),
+            subtitle: Text("Payez avec Paypal"),)
+              ],
+            ),
+            actions: [TextButton(onPressed: (){
+          
+            }, child: Text("Confirmer"))],),
+        );
           
       }
       );
@@ -199,27 +209,40 @@ bool destinationChosen = false;
     FirebaseMessaging.onMessage.listen((message) {
        if(message.notification!.body=="Le chauffeur a accepté votre course"){
       showDialog(context: context, builder: (context){
-        return AlertDialog(
-          title: Text("Chisissez votre payment"),
-          content: Column(
-            children: [
-          RadioListTile(value: 1, groupValue: 1, onChanged: (val){},
-          title: Text("Espèce"),
-          subtitle: Text("Payez en espèces au lieu de déspose"),
-            
-            
-           
-          ),
-          RadioListTile(value: 2, groupValue: 2, onChanged: (val){
-            
-          },
-          title: Text("Paypal"),
-          subtitle: Text("Payez avec Paypal"),)
-            ],
-          ),
-          actions: [TextButton(onPressed: (){
+        return Container(
+          
+          child: AlertDialog(
+            title: Text("Chisissez votre payment"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+            RadioListTile(value: 1, groupValue: selectedMethodePayment, onChanged: (val){
+              setState(() {
+                selectedMethodePayment=val!;
+              });
+            },
+            title: Text("Espèce"),
+            subtitle: Text("Payez en espèces au lieu de déspose"),
+              
+              
+             
+            ),
+            RadioListTile(value: 2, groupValue: selectedMethodePayment, onChanged: (val){
+              setState(() {
+                selectedMethodePayment=val!;
+              });
+            },
+            title: Text("Paypal"),
+            subtitle: Text("Payez avec Paypal"),)
+              ],
+            ),
+            actions: [TextButton(onPressed: (){
+              if(selectedMethodePayment==2){
 
-          }, child: Text("Confirmer"))],);
+              }
+          
+            }, child: Text("Confirmer"))],),
+        );
           
       }
       );
@@ -282,6 +305,8 @@ bool destinationChosen = false;
                
               
             ),
+            
+            
              GestureDetector(
                onTap:(){
         if(!draweropen){
@@ -297,9 +322,10 @@ bool destinationChosen = false;
       
         }        } ,
                child: Positioned(
-                  top: 5.0,
-                  left: 25.0,
-                  bottom: 20,
+                  top: 0,
+                  left: 30,
+                  bottom: 11,
+                  
                   child: Container(
                     
                     decoration:BoxDecoration(color: Colors.white,borderRadius: BorderRadius.circular(22.0),
@@ -398,35 +424,31 @@ LayoutBuilder(
                 child: CustomScrollView(
                   controller: scrollController,
                   slivers: [
-                    SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (BuildContext context, int index) {
-                          
-                          Map<String, dynamic> driver = nearbyDrivers[currentDriverIndex];
-                          return Column(
-                            children: [
-                       
-                
-                    
-                              ListTile(
+                SliverList(
+  delegate: SliverChildBuilderDelegate(
+    (BuildContext context, int currentDriverIndex) {
+      if (currentDriverIndex < nearbyDrivers.length) {
+        Map<String, dynamic> driver = nearbyDrivers[currentDriverIndex];
+        return ListTile(
+          leading: Image.asset("asset/logotaxi.jpg",width: 80,),
+          title: Text(driver['driverGmail']),
+          subtitle: Text('Prix: ${driver['prix']} DT'),
+          trailing: ElevatedButton(
+            onPressed: () {
+              sendnotification("hello", "notification", driver['token']);
+            },
+            child: Text('Confirmer'),
+          ),
+        );
+      } else {
+        return null; // Return null if index exceeds the length of nearbyDrivers
+      }
+    },
+    // Set childCount to the length of nearbyDrivers
+    childCount: 1,
+  ),
+),
 
-                              
-                                
-                                title: Text(driver['driverGmail']),
-                                subtitle: Text('Distance: ${driver['prix']} '),
-                                  trailing: ElevatedButton(onPressed: (){
-                                    sendnotification("hello", "notification", driver['token']);
-                                  }, child: Text('Confirmer'))
-                          
-                                            
-                              ),
-                             
-                            ],
-                          );
-                        },
-                        childCount: 1,
-                      ),
-                    ),
                    
                   ],
                 ),
@@ -438,7 +460,7 @@ LayoutBuilder(
 
     );
   },
-)
+),
 
       
          ] ),
@@ -562,6 +584,8 @@ return formattedAddress;
   var gmail = value['email'];
   var availibility = value["isAvailable"];
   var tokench = value['token']; 
+  var nom= value['Nom'];
+  var prenom= value['Prénom'];
 
   if (lat != null && lng != null) {
     double distance = Geolocator.distanceBetween(_currentPosition!.latitude, _currentPosition!.longitude, lat, lng);
@@ -571,10 +595,10 @@ return formattedAddress;
     double  dis =Geolocator.distanceBetween(_currentPosition!.latitude, _currentPosition!.longitude, _destinationposition!.latitude, _destinationposition!.longitude);
  double prix= (distance+dis)/1000;
  double prixcource =prix*900;
- 
+ int courceprice=prixcource.toInt();
     nearbyDrivers.add({
-      'driverGmail': gmail ,
-      'prix':distance,
+      'driverGmail': nom ,
+      'prix':courceprice,
       'token':tokench
    
 
@@ -712,31 +736,36 @@ PolylinePoints polylinePoints = PolylinePoints();
     color: Color(0xff3498db),
     width: 5,
     points: polylineCo,
+    
+    
   );
   polylineSet.add(polyline);
 
   // Ajouter le marqueur de durée
   if (polylineCo.length > 1) {
-    var midPointIndex = (polylineCo.length / 2).round();
-    var midPoint = polylineCo[midPointIndex];
     var durationText =
         responseBody['routes'][0]['legs'][0]['duration']['text'];
 
     Marker durationMarker = Marker(
-      markerId: MarkerId("duration"),
-      position: midPoint,
+      markerId: MarkerId("durationMarker"),
+    
       infoWindow: InfoWindow(
         title: 'Duration',
         snippet: durationText,
       ),
     );
-    
+
+// Before creating durationMarker
+print('Duration Text: $durationText');
 ;
     // Ajouter le marqueur à la liste des marqueurs
-    markersList.add(durationMarker);
     // Mettre à jour la liste des marqueurs sur la carte
+   /* setState(() {
+    markersList = Set<Marker>.of(markersList);
+    });*/
     setState(() {
-      markersList = Set<Marker>.of(markersList);
+          markersList.add(durationMarker);
+
     });
   }
 }

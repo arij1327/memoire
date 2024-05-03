@@ -395,7 +395,7 @@ Future<void> fetchAvailability() async {
  // Import de la librairie Firebase Realtime Database
 
 Future<void> getDataUser() async {
-  DatabaseReference ref = FirebaseDatabase.instance.reference().child("chauffeur").child(FirebaseAuth.instance.currentUser!.uid);
+  DatabaseReference ref = FirebaseDatabase.instance.reference().child("position").child(FirebaseAuth.instance.currentUser!.uid);
 
   // Fetch data once
   DataSnapshot snapshot = await ref.get();

@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:app/authentification/sign_in.dart';
+import 'package:app/authentification/sign_up.dart';
 import 'package:app/chauffeur/chauffeur.dart';
 import 'package:app/chauffeur/profilechauffeur.dart';
 import 'package:app/user/utilisateur.dart';

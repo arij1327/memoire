@@ -25,12 +25,12 @@ class _signuppageState extends State<signuppage> {
   
 
       
-       await FirebaseDatabase.instance.ref('chauffeur').child(FirebaseAuth.instance.currentUser!.uid).set({
-   'Nom': _userController.text,
-      'Prénom': _prenomController.text,
-      'Numéro du taxi': usernumController.text,
-      'Matricule': usermatController.text,
-      'Modèle': choosevalue,
+       await FirebaseDatabase.instance.ref('position').child(FirebaseAuth.instance.currentUser!.uid).update({
+   'Nom': _userController.text.toString(),
+      'Prénom': _prenomController.text.toString(),
+      'Numéro du taxi': usernumController.text.toString(),
+      'Matricule': usermatController.text.toString(),
+      'Modèle': choosevalue.toString(),
      // 'image':url
        
 
@@ -85,7 +85,7 @@ e164Key: "",
     DatabaseEvent snapshot = await reff.orderByChild('Numéro du taxi').equalTo(taxiNumber).once();
 DataSnapshot dataSnapshot = snapshot.snapshot;
     // Check if the snapshot contains any data
-    if (dataSnapshot.value != null) {
+    if (dataSnapshot.exists) {
       // Taxi number exists
        return 'Ce numéro de taxi existe déjà.';
     } else {
@@ -245,7 +245,7 @@ DataSnapshot dataSnapshot = snapshot.snapshot;
                  TextFormField(
                   onFieldSubmitted: (value)async {
         checkTaxiNumberExists(value);
-                  },
+                  },keyboardType: TextInputType.number,
                       controller: usernumController,
                       decoration: InputDecoration(
                         labelText: 'Numéro du Taxi',
@@ -273,6 +273,7 @@ DataSnapshot dataSnapshot = snapshot.snapshot;
                     ),
                       SizedBox(height: 20),
                  TextFormField(
+                  keyboardType: TextInputType.number,
                       controller: userphoneController,
                       
                       decoration: InputDecoration(

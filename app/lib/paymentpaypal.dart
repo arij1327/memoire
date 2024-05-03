@@ -42,7 +42,9 @@ class _CheckoutPageState extends State<CheckoutPage> {
           onPressed: () async {
             Navigator.of(context).push(MaterialPageRoute(
               builder: (BuildContext context) => PaypalCheckout(
+                
                 sandboxMode: true,
+                
                 clientId: "",
                 secretKey: "",
                 returnURL: "success.snippetcoder.com",

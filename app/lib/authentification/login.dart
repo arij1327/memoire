@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:app/authentification/sign_in.dart';
+import 'package:app/authentification/sign_up.dart';
 import 'package:app/chauffeur/chauffeur.dart';
 import 'package:app/chauffeur/profilechauffeur.dart';
 import 'package:app/widgets/backgroundimagelogin.dart';
@@ -173,7 +173,7 @@ FirebaseMessaging.instance.onTokenRefresh.listen((event) {
                                          );
                                          
                                        String? token = await FirebaseMessaging.instance.getToken();
-              await FirebaseDatabase.instance.ref('position').child(credential.user!.uid).set({
+              await FirebaseDatabase.instance.ref('position').child(credential.user!.uid).update({
                                        'email': _emailController.text,
                                                
                                         "isAvailable": false,
@@ -289,7 +289,15 @@ FirebaseMessaging.instance.onTokenRefresh.listen((event) {
                                           ),
                                         ),
                                       ],
-                                    )
+                                    ),Container(
+                          child: Image.asset(
+                            "asset/taxi1.PNG",
+                            fit:BoxFit.fill,
+                            height: 120,
+                            
+                          ),
+                        ),
+
                                                        ],
                                          ),
                                   ),
