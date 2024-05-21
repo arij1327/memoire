@@ -42,7 +42,7 @@ dependencies:
   firebase_database: ^10.4.0
   search_map_location: ^0.0.6
   geolocator: ^11.0.0
-  geocoding: ^2.2.0
+  
   flutter_svg: ^2.0.9
   location: ^5.0.3
   google_api_headers: ^1.6.0
@@ -69,6 +69,12 @@ dependencies:
   firebase_app_check: ^0.2.2+2
   rating_dialog: ^2.0.4
   google_nav_bar: ^5.0.6
+  geocoding: ^3.0.0
+  fluttertoast: ^8.2.5
+  flutter_dotenv: ^5.1.0
+  dio: ^5.4.3+1
+  flutter_stripe: ^9.3.0
+  flutter_local_notifications: ^17.1.2
  
   
   

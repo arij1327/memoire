@@ -11,26 +11,56 @@ class ProfileUser extends StatefulWidget {
 
 class _ProfileUserState extends State<ProfileUser> {
   List datauser = [];
+  void initState(){
+    super.initState();
+    getDataUser();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: ListView.builder(itemBuilder: (context,i){
+      appBar: AppBar(
+        title: Text("Profile User"),
+      ),
+      body: ListView.builder(itemBuilder: 
+      (context,i) {
         return Column(
           children: [
-            Text(datauser[i]['name']),
-           
+           /* CircleAvatar(
+              child:Image.network(data[i]['image']) ,
+            ),*/
+            
+           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+               Text(datauser[i]['Nom'],style: TextStyle(fontSize: 25),),
+               SizedBox(width:8),
+             //   Text(data[i]['Prénom'],style: TextStyle(fontSize: 25),),
+
+            ],
+           )
           ],
         );
-      }),
+
+      }, itemCount: datauser.length),
     );
   }
-  Future<void> getdatauser()async{
-DatabaseReference ref=FirebaseDatabase.instance.ref().child("user").child(FirebaseAuth.instance.currentUser!.uid);
-DataSnapshot snapshot=await ref.get();
-dynamic dataa =snapshot.value;
+ Future<void> getDataUser() async {
+  DatabaseReference ref = FirebaseDatabase.instance.ref().child('user').child(FirebaseAuth.instance.currentUser!.uid);
 
-if(snapshot.value!=null){
+  // Fetch data once
+  DataSnapshot snapshot = await ref.get();
 
-datauser.add(dataa);
-  }}
+  if (snapshot.value != null) {
+    // Data exists, add it to your list or use it as needed
+    dynamic data = snapshot.value;
+    
+
+    setState(() {
+      datauser.add(data);    
+
+    });
+  } else {
+    print("Document does not exist");
+  }
+}
 }

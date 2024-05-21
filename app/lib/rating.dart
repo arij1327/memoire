@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:rating_dialog/rating_dialog.dart';
@@ -40,11 +42,11 @@ final _dialog = RatingDialog(
       
 
      }
-     /* void submitRating(double rating, String comment) async {
+      void submitRating(double rating, String comment) async {
     try {
       // Enregistrer la notation dans Firestore
       await FirebaseDatabase.instance.ref('driver_ratings').set({
-        'driverId':  FirebaseAuth.instance.currentdriver!.uid,
+        'driverId':  FirebaseAuth.instance.currentUser!.uid,
         'userId': FirebaseAuth.instance.currentUser!.uid, // ID de l'utilisateur actuel
         'rating': rating,
         'comment': comment,
@@ -54,7 +56,7 @@ final _dialog = RatingDialog(
     } catch (e) {
       print('Échec de la soumission de la notation : $e');
     }
-  }*/
+  }
 
 
     

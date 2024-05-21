@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:app/authentification/sign_up.dart';
 import 'package:app/chauffeur/chauffeur.dart';
 import 'package:app/chauffeur/profilechauffeur.dart';
+import 'package:app/user/registeruser.dart';
 import 'package:app/user/utilisateur.dart';
 import 'package:app/widgets/backgroundimagelogin.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -31,7 +32,6 @@ class _LoginuserPageState extends State<LoginuserPage> {
   late LatLng? _currentPositionchauff;
   bool _isSigningIn = false;
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  //CollectionReference users = FirebaseFirestore.instance.collection('position');
 
 GlobalKey<FormState>  formKey= GlobalKey<FormState>();
 
@@ -82,7 +82,7 @@ FirebaseMessaging.instance.onTokenRefresh.listen((event) {
 
   // Once signed in, return the UserCredential
    await FirebaseAuth.instance.signInWithCredential(credential);
-    Navigator.pushReplacement(context,MaterialPageRoute(builder:(context)=>UserProfilePage()));
+    Navigator.pushReplacement(context,MaterialPageRoute(builder:(context)=>InterfacePage()));
 }
 
   @override
@@ -167,17 +167,40 @@ FirebaseMessaging.instance.onTokenRefresh.listen((event) {
 
                                         print("hhhhhhhhhhhhhhhhh") ; 
                                           if(formKey.currentState!.validate()){
-                                              try {
-                                         UserCredential credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+                                              try {                                       UserCredential credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
                                        email: _emailController.text,
                                                        password: _passwordController.text,
                                          );
                                          
+                                       DatabaseEvent event = (await FirebaseDatabase.instance
+      .ref('position/${credential.user!.uid}/statut')
+      .once()) ;
+
+String? userStatut;
+
+if (event.snapshot != null) {
+  userStatut = event.snapshot!.value as String?;
+} else {
+  // Handle if snapshot is null or no data found
+}
+if(userStatut=="chauffeur")
+                         {
+                          await FirebaseDatabase.instance.ref('position').child(credential.user!.uid).push().set({
                                        
-                                          
+                                               
+                                     
+
+                                         // Add more f+ields as needed
+                                       });
+                                               Navigator.pushReplacement(context,MaterialPageRoute(builder:(context)=>DriverProfilePage())) ;
+
+                         }  
+                         else{
+             Navigator.pushReplacement(context,MaterialPageRoute(builder:(context)=>InterfacePage())) ;
+
+                         }               
                                          print("okok") ; 
                                         
-                                               Navigator.pushReplacement(context,MaterialPageRoute(builder:(context)=>InterfacePage())) ;
                                        } on FirebaseAuthException catch (e) {
                                          if (e.code == 'user-not-found') {
                                        print('No user found for that email.');
@@ -205,9 +228,7 @@ FirebaseMessaging.instance.onTokenRefresh.listen((event) {
                                           else{
                                             print("Non Valider");
                                           }        
-                                        
-                                      //  addUser();
-                                      //  getToken();
+                                      
                                      
                                       },
                                       child: Text("Connexion",),
@@ -254,7 +275,7 @@ FirebaseMessaging.instance.onTokenRefresh.listen((event) {
 
   // Once signed in, return the UserCredential
    await FirebaseAuth.instance.signInWithCredential(credential);
-    Navigator.pushReplacement(context,MaterialPageRoute(builder:(context)=>UserProfilePage()));
+    Navigator.pushReplacement(context,MaterialPageRoute(builder:(context)=>InterfacePage()));
                                       },
                                       child: Text(_isSigningIn ? "Signing in..." : "Login with Google"),
                                     ),
@@ -269,7 +290,7 @@ FirebaseMessaging.instance.onTokenRefresh.listen((event) {
                                           onTap: () {
                                             Navigator.pushAndRemoveUntil(
                                               context,
-                                              MaterialPageRoute(builder: (context) => signuppage()),
+                                              MaterialPageRoute(builder: (context) => SignupUserPage()),
                                               (route) => false,
                                             );
                                           },

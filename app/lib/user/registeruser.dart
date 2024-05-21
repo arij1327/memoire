@@ -1,295 +1,214 @@
-
-
-import 'package:app/authentification/login.dart';
-import 'package:app/chauffeur/profilechauffeur.dart';
-import 'package:app/user/loginuser.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
-class signuppage extends StatefulWidget {
-  const signuppage({super.key});
+import 'loginuser.dart'; // Importez le fichier contenant la page de connexion utilisateur
+
+class SignupUserPage extends StatefulWidget {
+  const SignupUserPage({Key? key}) : super(key: key);
 
   @override
-  State<signuppage> createState() => _signuppageState();
+  State<SignupUserPage> createState() => _SignupPageState();
 }
 
-class _signuppageState extends State<signuppage> {
-  Future<void> addUser() async {
-
-  
-
-      
-       await FirebaseDatabase.instance.ref('chauffeur').child(FirebaseAuth.instance.currentUser!.uid).set({
-   'Nom': _userController.text,
-      'Prénom': _prenomController.text,
-      'Numéro du taxi': usernumController.text,
-      'Matricule': usermatController.text,
-      'Modèle': choosevalue,
-     // 'image':url
-       
-
-      // Add more fields as needed
-    });
-      print("User Added");
-  
-}
-   Country selectedCountry = Country(
-phoneCode: "216", 
-countryCode: "TN",
-e164Sc: 0,
-geographic: true,
-level: 1,
-name: "tunisia",
-example: "tunisia",
-displayName: "tunisia",
-displayNameNoCountryCode: "TN",
-e164Key: "",
-);
-   bool _isSigningIn = false;
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-    TextEditingController _userController = TextEditingController();
-        TextEditingController _prenomController = TextEditingController();
-
-
+class _SignupPageState extends State<SignupUserPage> {
+  // Déclarations des variables et contrôleurs de texte
+  TextEditingController _prenomController = TextEditingController();
+  TextEditingController _userController = TextEditingController();
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
   TextEditingController _confirmpasswordController = TextEditingController();
-   final TextEditingController usernumController = TextEditingController();
-      final TextEditingController userphoneController = TextEditingController();
-
-
-  final TextEditingController usermatController = TextEditingController();
-  final TextEditingController usertypController = TextEditingController();
-  bool ischecked= false;
-   String? choosevalue;
+  TextEditingController usernumController = TextEditingController();
+  TextEditingController userphoneController = TextEditingController();
+  TextEditingController usermatController = TextEditingController();
   final List<String> models = ["Fiat", "Ford", "Hyundai", "KIA", "Peugeot", "Renault"];
+  String? choosevalue;
+  String? choosevalue1;
 
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
- Future checkTaxiNumberExists(String taxiNumber) async {
-  try {
-    // Get a reference to the 'chauffeur' collection
-    DatabaseReference reff = FirebaseDatabase.instance.ref().child('chauffeur');
-    
-    // Query the database to check if the taxi number exists
-    DatabaseEvent snapshot = await reff.orderByChild('Numéro du taxi').equalTo(taxiNumber).once();
-DataSnapshot dataSnapshot = snapshot.snapshot;
-    // Check if the snapshot contains any data
-    if (dataSnapshot.value != null) {
-      // Taxi number exists
-       return 'Ce numéro de taxi existe déjà.';
-    } else {
-      // Taxi number does not exist
-        return 'valid';
-    }
-  } catch (e) {
-    // Handle any errors
-    print('Error checking taxi number: $e');
-    return false; // Assuming no taxi number exists if there's an error
-  }
-}
- /* Future<void> checkTaxiNumber(String taxiNumber) async {
-  DatabaseReference ref = FirebaseDatabase.instance.reference().child("chauffeur");
-
-  // Recherche dans la base de données pour vérifier si le numéro de taxi existe
-  ref.orderByChild("taxi_number").equalTo(taxiNumber).once().then((DataSnapshot snapshot) {
-    if (snapshot.value != null) {
-      // Le numéro de taxi existe
-      setState(() {
-        taxiNumberExists = true;
-      });
-    } else {
-      // Le numéro de taxi n'existe pas
-      setState(() {
-        taxiNumberExists = false;
-      });
-    }
-  }).catchError((error) {
-    print("Error checking taxi number: $error");
-  });
-}*/
-
-// Utili
+  Country selectedCountry = Country(
+    phoneCode: "216",
+    countryCode: "TN",
+    e164Sc: 0,
+    geographic: true,
+    level: 1,
+    name: "Tunisia",
+    example: "Tunisia",
+    displayName: "Tunisia",
+    displayNameNoCountryCode: "TN",
+    e164Key: "",
+  );
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
-      body: Container(
-        
-        child: ListView(
-          
-          children: [
-           
-            Column(mainAxisAlignment: MainAxisAlignment.center,
-            
-              children: [
-                Padding(padding: EdgeInsets.only(top :30)),
-                 Row(children: [Image.asset("asset/logo.png",height: 50,), SizedBox(width: 250,),IconButton(onPressed: (){}, icon: Icon(Icons.close),)],),
-                Text("S'inscrire",style: TextStyle(fontSize:40 ),),
-                Padding(padding:EdgeInsets.all(20)),
-                Row(children: [Expanded(
-                  child: TextField(
-                    decoration: InputDecoration(
-                                  labelText: 'Prenom',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                ),
-                    controller: _userController,
-                  ),
-                ),SizedBox(width: 12,),Expanded(
-                  child: TextField(
-                    controller: _prenomController,
-                   decoration: InputDecoration(
-                                  labelText: 'Nom',
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                ),
-                  ),
-                )],),Padding(padding:EdgeInsets.all(8)),
-                TextFormField(
-                /*  validator: (email) {
-                       String pattern =
-                                  r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
-                              RegExp regex = RegExp(pattern);
-                              if (email!.isEmpty) {
-                                return 'Ce champ est obligatoire';
-                              }
-                              if (!regex.hasMatch(email)) {
-                                return 'S"il vous plaît, mettez une adresse email valide';
-                              } else {
-                                return null;
-                              }
-                  },*/
-                  controller: _emailController,
-                              decoration: InputDecoration(
-                                labelText: 'Adress Email',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                              ),
-                              
+      appBar: AppBar(title: Text('Sign Up')),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Ajout des champs pour le prénom et le nom
+              TextField(
+                controller: _prenomController,
+                decoration: InputDecoration(labelText: 'Prénom'),
+              ),
+              TextField(
+                controller: _userController,
+                decoration: InputDecoration(labelText: 'Nom'),
+              ),
+              // Ajout du champ pour l'adresse email
+              TextField(
+                controller: _emailController,
+                decoration: InputDecoration(labelText: 'Adresse Email'),
+              ),
+              // Ajout des champs pour le mot de passe et sa confirmation
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: InputDecoration(labelText: 'Mot de passe'),
+              ),
+              TextField(
+                controller: _confirmpasswordController,
+                obscureText: true,
+                decoration: InputDecoration(labelText: 'Confirmez le mot de passe'),
+              ),
+              // Dropdown pour sélectionner le type d'utilisateur (utilisateur ou chauffeur)
+              DropdownButtonFormField<String>(
+                value: choosevalue ?? 'utilisateur',
+                onChanged: (newValue) {
+                  setState(() {
+                    choosevalue = newValue;
+                  });
+                },
+                items: ['utilisateur', 'chauffeur'].map((valueItem) {
+                  return DropdownMenuItem<String>(
+                    child: Text(valueItem),
+                    value: valueItem,
+                  );
+                }).toList(),
+              ),
+              // Condition pour afficher les champs supplémentaires si le type d'utilisateur est "chauffeur"
+              if (choosevalue == 'chauffeur') ...[
+                // Champ pour le numéro de taxi
+                TextField(
+                  controller: usernumController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(labelText: 'Numéro du Taxi'),
+                  
                 ),
-                Padding(padding:EdgeInsets.all(8)),
-                 TextFormField(
-                  /*  validator: (password) {
-                              if (password == null || password.isEmpty) {
-                                return 'Veuillez entrer un mot de passe.';
-                              }
-
-                              // Vérifier la longueur du mot de passe
-                              if (password.length < 6) {
-                                return 'Le mot de passe doit contenir au moin 6 caractères.';
-                              }
-
-                              // Vérifier la présence d'au moins une minuscule
-                              if (!password.contains(RegExp(r'[a-z]'))) {
-                                return 'Le mot de passe doit contenir au moins une lettre minuscule.';
-                              }
-
-                              // Vérifier la présence d'au moins une majuscule
-                              if (!password.contains(RegExp(r'[A-Z]'))) {
-                                return 'Le mot de passe doit contenir au moins une lettre majuscule.';
-                              }
-
-                              // Vérifier la présence d'au moins un chiffre
-                              if (!password.contains(RegExp(r'[0-9]'))) {
-                                return 'Le mot de passe doit contenir au moins un chiffre.';
-                              }
-
-                              // Vérifier la présence d'au moins un caractère spécial
-                              if (!password.contains(
-                                  RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
-                                return 'Le mot de passe doit contenir au moins un caractère spécial.';
-                              }
-
-                              return null;
-                            },*/
-                  controller: _passwordController,
-                  obscureText: true,
-                              decoration: InputDecoration(
-                                labelText: 'Mot de passe',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                              ),
-                 ),
-                 Padding(padding:EdgeInsets.all(8)),
-                 TextFormField(
-                  validator: (value) {
-                    if (_passwordController.text!=_confirmpasswordController.text)return "verifier votre password";
-                     return null;
+                // Champ pour le matricule
+                TextField(
+                  controller: usermatController,
+                  decoration: InputDecoration(labelText: 'Matricule'),
+                ),
+              ],
+              // Champs pour le numéro de téléphone
+              TextField(
+                controller: userphoneController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: 'Numéro de téléphone',
+                  prefixIcon: GestureDetector(
+                    onTap: () {
+                      showCountryPicker(
+                        context: context,
+                        onSelect: (value) {
+                          setState(() {
+                            selectedCountry = value;
+                          });
+                        },
+                      );
+                    },
+                    child: Text("${selectedCountry.flagEmoji} +${selectedCountry.phoneCode}", style: TextStyle(fontSize: 20)),
+                  ),
+                ),
+              ),
+              // Dropdown pour sélectionner le modèle de voiture (uniquement pour les chauffeurs)
+              if (choosevalue == 'chauffeur') ...[
+                DropdownButtonFormField<String>(
+                  value: choosevalue1 ?? models.first,
+                  onChanged: (newValue) {
+                    setState(() {
+                      choosevalue1 = newValue;
+                    });
                   },
-                  controller: _confirmpasswordController,
-                  obscureText: true,
-                              decoration: InputDecoration(
-                                labelText: 'Confirmz le Mot de passe',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                              ),
-                 ),
-                    Padding(padding:EdgeInsets.all(8)),
-                 
-                      
-             
-                
-            
-                ElevatedButton(onPressed: ()async{try {
-              final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-                email: _emailController.text,
-                password: _passwordController.text,
-                
-            
-              );
-              await FirebaseDatabase.instance.ref('user').child(credential.user!.uid).set({
+                  items: models.map((valueItem) {
+                    return DropdownMenuItem<String>(
+                      child: Text(valueItem),
+                      value: valueItem,
+                    );
+                  }).toList(),
+                ),
+              ],
+              // Bouton pour s'inscrire
+              ElevatedButton(
+                onPressed: () async {
+                  // Logique pour s'inscrire selon le type d'utilisateur sélectionné
+                  try {
+                    final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+                      email: _emailController.text,
+                      password: _passwordController.text,
+                    );
+                    if (choosevalue == "chauffeur") {
+                       String? token = await FirebaseMessaging.instance.getToken();
+
+                        await FirebaseDatabase.instance.ref('position').child(credential.user!.uid).set({
                                        'email': _emailController.text,
                                                
-                                       
-                                       
+                                       'Nom': _userController.text,
+                                       'statut':choosevalue,
+                                         "token":token
                                        
                                          // Add more f+ields as needed
                                        });
-                                            
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>LoginuserPage()));
-            } on FirebaseAuthException catch (e) {
-              if (e.code == 'weak-password') {
-                print('The password provided is too weak.');
-                 ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text("The password provided is too weak."),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-              } else if (e.code == 'email-already-in-use') {
-                print('The account already exists for that email.');
-            ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text("the account already exists for that email"),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-              }
-            } catch (e) {
-              print(e);
-            }
-            addUser();
-            
-                }, child: Text("Sinscrire")),
-                 const SizedBox(height:230),
+                      // Logique pour les chauffeurs
+                      // Ajoutez ici le code pour sauvegarder les données du chauffeur dans la base de données
+                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginuserPage()));
+                    } else {
+                         await FirebaseDatabase.instance.ref('user').child(credential.user!.uid).set({
+                                       'email': _emailController.text,
+                                               
+                                       'Nom': _userController.text,
+                                       
+                                       'statut':choosevalue,
+                                      
+
+                                         // Add more f+ields as needed
+                                       });
+                      // Logique pour les utilisateurs
+                      // Ajoutez ici le code pour sauvegarder les données de l'utilisateur dans la base de données
+                      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginuserPage()));
+                    }
+                  } on FirebaseAuthException catch (e) {
+                    // Gestion des erreurs d'authentification
+                    if (e.code == 'weak-password') {
+                      print('The password provided is too weak.');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("The password provided is too weak."),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    } else if (e.code == 'email-already-in-use') {
+                      print('The account already exists for that email.');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text("The account already exists for that email"),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    print(e);
+                  }
+                },
+                child: Text("S'inscrire"),
+              ),
+
                Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -315,13 +234,33 @@ DataSnapshot dataSnapshot = snapshot.snapshot;
                           ), 
               ],
               
-            ),
             
-          ],
           
+          ),
         ),
-        
       ),
     );
   }
- }
+    Future checkTaxiNumberExists(String taxiNumber) async {
+  try {
+    // Get a reference to the 'chauffeur' collection
+    DatabaseReference reff = FirebaseDatabase.instance.ref().child('chauffeur');
+    
+    // Query the database to check if the taxi number exists
+    DatabaseEvent snapshot = await reff.orderByChild('Numéro du taxi').equalTo(taxiNumber).once();
+DataSnapshot dataSnapshot = snapshot.snapshot;
+    // Check if the snapshot contains any data
+    if (dataSnapshot.exists) {
+      // Taxi number exists
+       return 'Ce numéro de taxi existe déjà.';
+    } else {
+      // Taxi number does not exist
+        return 'valid';
+    }
+  } catch (e) {
+    // Handle any errors
+    print('Error checking taxi number: $e');
+    return false; // Assuming no taxi number exists if there's an error
+  }
+}
+}

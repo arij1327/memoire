@@ -2,9 +2,14 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'package:app/getpointpolyline.dart';
+import 'package:app/homepage.dart';
 import 'package:app/location_search_screen.dart';
+import 'package:app/paymentpaypal.dart';
+import 'package:app/stripe_payment/stripe_keys.dart';
+import 'package:app/user/historiquetrajet.dart';
 import 'package:app/user/profileuser.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -14,14 +19,18 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_address_from_latlng/flutter_address_from_latlng.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
+import 'package:flutter_paypal_checkout/flutter_paypal_checkout.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:google_api_headers/google_api_headers.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:app/constant.dart';
+import 'package:rating_dialog/rating_dialog.dart';
 
 
 
@@ -37,7 +46,8 @@ class InterfacePage extends StatefulWidget {
 
 class _InterfacePageState extends State<InterfacePage> {
 
-
+  String? _placeName;
+ 
 
  
 double searchwidth=400;
@@ -89,9 +99,11 @@ if(permission==LocationPermission.whileInUse){
  
     setState(() {
       _currentPosition = LatLng(position.latitude, position.longitude);
+
     
     });
     markersList.add (Marker (markerId: const MarkerId ("0"), position: LatLng (_currentPosition!.latitude,_currentPosition!.longitude)));
+_mapController?.animateCamera (CameraUpdate.newLatLngZoom (LatLng (_currentPosition!.latitude, _currentPosition!.longitude), 14.0));
 
     print(_currentPosition);
 
@@ -125,8 +137,9 @@ bool destinationChosen = false;
  int changechauff=0;
    // LatLng? _currentPositionchauff;
    bool selected= false;
-    int selectedMethodePayment = 1;
-
+    String ?selectedMethodePayment='';
+ int? courcePrice;
+ List datauser= [];
   
   final homeScaffoldKey = GlobalKey<ScaffoldState>();
  // late Location _locationController;
@@ -137,6 +150,8 @@ bool destinationChosen = false;
   
     //getnotification();
     _determinePosition();
+    getDataUser();
+    getDataofUser();
 
     super.initState();
   
@@ -168,86 +183,87 @@ bool destinationChosen = false;
  
     
   });
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      if (message.notification?.body == "couce terminé") {
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+             
+              content: RatingDialog(
+                initialRating: 1.0,
+                title: Text(
+                  'Quel est votre avis sur le service du taxi ',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 25,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                message: Text(
+                  'Tap a star to set your rating. Add more description here if you want.',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontSize: 15),
+                ),
+                image: const FlutterLogo(size: 100),
+                submitButtonText: 'Submit',
+                commentHint: 'Set your custom comment hint',
+                onCancelled: () => print('cancelled'),
+                onSubmitted: (response) {
+                  print('rating: ${response.rating}, comment: ${response.comment}');
+                  submitRating(response.rating, response.comment,message.data['identifiant']);
+                },
+              ),
+            );
+          },
+        );
+      }
+    });
+  }
+
+  void submitRating(double rating, String comment,identifiant) async {
+    try {
+      // Enregistrer la notation dans Firestore
+      await FirebaseDatabase.instance
+          .ref('rating')
+          .child(identifiant)
+          
+          .push().set({
+        // ID de l'utilisateur actuel
+        'rating': rating.toString(),
+        'comment': comment.toString(),
+        'timestamp': DateTime.now().toIso8601String(),
+      });
+      print('Notation soumise avec succès !');
+    } catch (e) {
+      print('Échec de la soumission de la notation : $e');
+    }
+  
   FirebaseMessaging.onMessageOpenedApp.listen((message) {
        if(message.notification!.body=="Le chauffeur a accepté votre course"){
-      showDialog(context: context, builder: (context){
-        return Container(
-          
-          child: AlertDialog(
-            title: Text("Chisissez votre payment"),
-            content: Column(
-              children: [
-            RadioListTile(value: 1, groupValue: selectedMethodePayment, onChanged: (val){
-              setState(() {
-                selectedMethodePayment = val!;
-              });
-            },
-            title: Text("Espèce"),
-            subtitle: Text("Payez en espèces au lieu de déspose"),
-              
-              
-             
-            ),
-            RadioListTile(value: 2, groupValue: selectedMethodePayment, onChanged: (val){
-              setState(() {
-                selectedMethodePayment = val!;
-              });
-            },
-            title: Text("Paypal"),
-            subtitle: Text("Payez avec Paypal"),)
-              ],
-            ),
-            actions: [TextButton(onPressed: (){
-          
-            }, child: Text("Confirmer"))],),
-        );
-          
-      }
-      );
+        if(selectedMethodePayment=="Paypal"){
+       // Navigator.push(context, MaterialPageRoute(builder: (context)=>paymentStripe()));
+       ElevatedButton(onPressed: (){
+         Navigator.push(context, MaterialPageRoute(builder: (context)=>paymentStripe()));
+       }, child: Text("payer"));
+      } 
+      
     }
   });
     FirebaseMessaging.onMessage.listen((message) {
+      int totalAmount = courcePrice ?? 0;
        if(message.notification!.body=="Le chauffeur a accepté votre course"){
-      showDialog(context: context, builder: (context){
-        return Container(
-          
-          child: AlertDialog(
-            title: Text("Chisissez votre payment"),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-            RadioListTile(value: 1, groupValue: selectedMethodePayment, onChanged: (val){
-              setState(() {
-                selectedMethodePayment=val!;
-              });
-            },
-            title: Text("Espèce"),
-            subtitle: Text("Payez en espèces au lieu de déspose"),
-              
-              
-             
-            ),
-            RadioListTile(value: 2, groupValue: selectedMethodePayment, onChanged: (val){
-              setState(() {
-                selectedMethodePayment=val!;
-              });
-            },
-            title: Text("Paypal"),
-            subtitle: Text("Payez avec Paypal"),)
-              ],
-            ),
-            actions: [TextButton(onPressed: (){
-              if(selectedMethodePayment==2){
-
-              }
-          
-            }, child: Text("Confirmer"))],),
-        );
-          
+      if(selectedMethodePayment=="Paypal"){
+      //  Navigator.push(context, MaterialPageRoute(builder: (context)=>paymentStripe()));
+      ElevatedButton(onPressed: (){
+         Navigator.push(context, MaterialPageRoute(builder: (context)=>paymentStripe()));
+       }, child: Text("payer"));
       }
-      );
     }
   });
+  
+
+
   
   }
 
@@ -269,7 +285,7 @@ bool destinationChosen = false;
         leading: CircleAvatar(
           child: Icon(Icons.person),
         ),
-          title: Text("Votre Profile ",style: TextStyle(fontSize: 18),),
+          title: _buildUserList(),
 
           onTap: (){
             Navigator.push(context, MaterialPageRoute(builder: (context)=>ProfileUser()));
@@ -279,9 +295,19 @@ bool destinationChosen = false;
         ), ListTile(
           title: Text("Historique",style: TextStyle(fontSize: 18),),
           onTap: (){
+            Navigator.push(context, MaterialPageRoute(builder: (context)=>Historique()));
           },
           
-        )],),),
+        ),
+        ListTile(
+          title: Text("Déconnecter",style: TextStyle(fontSize: 18),),
+          onTap: ()async{
+            await FirebaseAuth.instance.signOut();
+            Navigator.push(context, MaterialPageRoute(builder: (context)=>homepage()));
+          },
+          
+        ),
+        ],),),
       body: Stack(
         children: [
  GoogleMap(
@@ -307,41 +333,45 @@ bool destinationChosen = false;
             ),
             
             
-             GestureDetector(
-               onTap:(){
-        if(!draweropen){
-          homeScaffoldKey.currentState!.openDrawer();     
-        }  else{
-          setState(() {
-            polylineSet.clear();
-            markersList.clear();
-      
-        destinationChosen = !destinationChosen;
-        
-      });
-      
-        }        } ,
-               child: Positioned(
-                  top: 0,
-                  left: 30,
-                  bottom: 11,
-                  
-                  child: Container(
+             Positioned(
+               top: 40, // ajuster la valeur pour déplacer verticalement depuis le bas
+                left   : 30,
+               child: GestureDetector(
+                 onTap:(){
+                       if(!draweropen){
+                         homeScaffoldKey.currentState!.openDrawer();     
+                       }  else{
+                         setState(() {
+                           polylineSet.clear();
+                           markersList.clear();
+                           polylineCo.clear();
+                     
+                       destinationChosen = !destinationChosen;
+                       
+                     });
+                     
+                       }        } ,
+                 child: Positioned(
+                     bottom: 150, // ajuster la valeur pour déplacer verticalement depuis le bas
+                   right: 30,
                     
-                    decoration:BoxDecoration(color: Colors.white,borderRadius: BorderRadius.circular(22.0),
-                    boxShadow: [
-                      BoxShadow(color: Colors.black,blurRadius: 6.0,spreadRadius: 0.5,offset: Offset(0.7, 0.7))
-                    ]),
-                    child: CircleAvatar(
-                      backgroundColor: Colors.white,
-                      child: Icon((!destinationChosen)?Icons.menu:
-                      Icons.close,),
-                 
+                    child: Container(
+                      
+                      decoration:BoxDecoration(color: Colors.white,borderRadius: BorderRadius.circular(22.0),
+                      boxShadow: [
+                        BoxShadow(color: Colors.black,blurRadius: 6.0,spreadRadius: 0.5,offset: Offset(0.7, 0.7))
+                      ]),
+                      child: CircleAvatar(
+                        backgroundColor: Colors.white,
+                        child: Icon((!destinationChosen)?Icons.menu:
+                        Icons.close,),
+                   
+                        
+                      ),
                       
                     ),
-                    
                   ),
-                ),
+               ),
              ),
             
 
@@ -435,16 +465,64 @@ LayoutBuilder(
           subtitle: Text('Prix: ${driver['prix']} DT'),
           trailing: ElevatedButton(
             onPressed: () {
-              sendnotification("hello", "notification", driver['token']);
+            //  sendnotification("hello", "notification", driver['token']);
+          showDialog(context: context, builder: (context){
+        return Container(
+          width:150,
+          height: 200,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.only(topLeft: Radius.circular(18),topRight: Radius.circular(18))
+          , boxShadow: [BoxShadow(color: Colors.black,blurRadius: 16.0,spreadRadius: 0.5,offset: Offset(0.7, 0.7))]
+          ),
+          child: AlertDialog(
+            title:  Row(
+              children: [
+IconButton(onPressed: (){
+  Navigator.pop(context);
+}, icon: Icon(Icons.arrow_back)) ,
+Text("Chisissez votre payment",style: TextStyle(fontSize: 18,fontWeight: FontWeight.bold)  )           ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+            RadioListTile(value: "Espèce",
+            
+             groupValue: selectedMethodePayment, onChanged: (val){
+              setState(() {
+                selectedMethodePayment=val;
+              });
             },
-            child: Text('Confirmer'),
+            title: Text("Espèce"),
+            subtitle: Text("Payez en espèces au lieu de déspose"),
+            
+            ),
+            RadioListTile(value: "Paypal", groupValue: selectedMethodePayment, onChanged: (val){
+              setState(() {
+                selectedMethodePayment=val;
+              });
+            },
+            title: Text("Paypal"),
+            subtitle: Text("Payez avec Paypal"),)
+              ],
+            ),
+            actions: [TextButton(onPressed: (){
+           
+           sendnotification("hello", "notification", driver['token']);
+            }, child: Text("Confirmer"))],),
+        );
+          
+      }
+      );
+    }
+    
+  ,
+            child: Text('Envoyer Notification'),
           ),
         );
       } else {
-        return null; // Return null if index exceeds the length of nearbyDrivers
+        return null; 
       }
     },
-    // Set childCount to the length of nearbyDrivers
     childCount: 1,
   ),
 ),
@@ -483,9 +561,37 @@ LayoutBuilder(
     
   }
 
+Widget _buildUserList(){
+  
+  return ListView.builder(
+    shrinkWrap: true,
+    itemCount:datauser.length ,
+    itemBuilder: (context,i){
+    return ListTile(
+      title: Text(
+datauser[i]['Nom']      ),
+    );
+  });
+}
 
+ Future<void> getDataUser() async {
+  DatabaseReference ref = FirebaseDatabase.instance.ref().child('user').child(FirebaseAuth.instance.currentUser!.uid);
 
+  // Fetch data once
+  DataSnapshot snapshot = await ref.get();
 
+  if (snapshot.value != null) {
+    // Data exists, add it to your list or use it as needed
+    dynamic data = snapshot.value;
+
+    setState(() {
+      datauser.add(data);    
+
+    });
+  } else {
+    print("Document does not exist");
+  }
+}
 
 
 
@@ -496,6 +602,8 @@ LayoutBuilder(
       sound: true,
     );
   }
+  
+
 
 Future getAdress()async{
     Position position= await Geolocator.getCurrentPosition();
@@ -505,11 +613,31 @@ Future getAdress()async{
   googleApiKey: "AIzaSyC7ckSip1a_oVGM1y7nPSWGUdTEPbkANIA",);
   return formattedAddress;
 }
+  getDataofUser() async {
+  DatabaseReference ref = FirebaseDatabase.instance.ref().child('user').child(FirebaseAuth.instance.currentUser!.uid);
+
+  // Fetch data once
+  DataSnapshot snapshot = await ref.get();
+  
+
+  if (snapshot.value != null) {
+    // Data exists, add it to your list or use it as needed
+    dynamic data = snapshot.value;
+String firstname;
+
+     firstname=data["Nom"];
+return firstname;
+    
+  } else {
+    print("Document does not exist");
+  }
+   
+}
  Future<void> sendnotification(title,messagee,token) async{
  var formattedAddress = await getAdress();
- 
+ String? methodepayment=selectedMethodePayment;
   
-  
+  var firstname= await getDataofUser();
 
   
   
@@ -533,7 +661,10 @@ var body = {
   },
   "data":{
      "token":token1,
-   "adress": formattedAddress
+   "adress": formattedAddress,
+   "methode_payment":methodepayment.toString(),
+   "prix":courcePrice.toString(),
+   "firstname":firstname
 
     }
 };
@@ -567,75 +698,64 @@ return formattedAddress;
 
  
  Future<List<Map<String, dynamic>>> findNearbyDrivers() async {
-
-  
-  
-  
-  
-  
   var collection = FirebaseDatabase.instance.ref('position');
   var snapshots = await collection.get();
-  List<Map<String,dynamic>> nearbyDrivers = [];
+  List<Map<String, dynamic>> nearbyDrivers = [];
   dynamic data = snapshots.value;
 
-  data.forEach((key, value) async {
-  var lat = value['lat']; 
-  var lng = value['long'];
-  var gmail = value['email'];
-  var availibility = value["isAvailable"];
-  var tokench = value['token']; 
-  var nom= value['Nom'];
-  var prenom= value['Prénom'];
+  // Vérifiez que data n'est pas null et est bien un Map
+  if (data != null && data is Map) {
+    for (var entry in data.entries) {
+      var value = entry.value;
+      var lat = value['lat'];
+      var lng = value['long'];
+      var gmail = value['email'];
+      var availability = value['isAvailable'];
+      var tokench = value['token'];
+      var nom = value['Nom'];
+      var prenom = value['Prénom'];
 
-  if (lat != null && lng != null) {
-    double distance = Geolocator.distanceBetween(_currentPosition!.latitude, _currentPosition!.longitude, lat, lng);
-    print("8888888888888888888888888888888888888888");
-  print(distance);
-      print("8888888888888888888888888888888888888888");
-    double  dis =Geolocator.distanceBetween(_currentPosition!.latitude, _currentPosition!.longitude, _destinationposition!.latitude, _destinationposition!.longitude);
- double prix= (distance+dis)/1000;
- double prixcource =prix*900;
- int courceprice=prixcource.toInt();
-    nearbyDrivers.add({
-      'driverGmail': nom ,
-      'prix':courceprice,
-      'token':tokench
-   
+      if (lat != null && lng != null && availability == true) {
+        double distance = Geolocator.distanceBetween(
+            _currentPosition!.latitude,
+            _currentPosition!.longitude,
+            lat,
+            lng);
 
-});
-nearbyDrivers.sort((a, b)=> a['distance'].compareTo(b['distance']));
+        double dis = Geolocator.distanceBetween(
+            _currentPosition!.latitude,
+            _currentPosition!.longitude,
+            _destinationposition!.latitude,
+            _destinationposition!.longitude);
 
+        double prix = (distance + dis) / 1000;
+        double prixcource = prix * 900;
+        int courcePrice = prixcource.toInt();
 
-
-
-  
-  
-
- 
-
-  
-   
-
+        nearbyDrivers.add({
+          'driverGmail': gmail,
+          'nom': nom,
+          'prenom': prenom,
+          'prix': courcePrice,
+          'token': tokench,
+          'distance': distance,
+        });
+      }
+    }
   }
- });
-  
 
+  // Tri des conducteurs par distance
+  nearbyDrivers.sort((a, b) => a['distance'].compareTo(b['distance']));
 
+  // Mettez à jour le prix de la course en dehors de cette fonction asynchrone
+  if (nearbyDrivers.isNotEmpty) {
+    setState(() {
+      this.courcePrice = nearbyDrivers.first['prix'];
+    });
+  }
 
+  return nearbyDrivers;}
 
-  print("5555555555555555555555555555555555555555");
-  print(nearbyDrivers);
-  
-    print("5555555555555555555555555555555555555555");
-
-  return nearbyDrivers!; 
-    
- 
-}
-  
-
-
-  
 
   
 
@@ -673,6 +793,7 @@ nearbyDrivers.sort((a, b)=> a['distance'].compareTo(b['distance']));
       print("Error occurred: $e");
     }
   }
+   
 
   Future displayPrediction (Prediction p, ScaffoldState? currentState) async {
 GoogleMapsPlaces places = GoogleMapsPlaces (
@@ -684,6 +805,24 @@ final lat = detail.result.geometry!.location. lat;
 final lng = detail.result.geometry!.location. lng;
 
   _destinationposition=LatLng(lat,lng);
+  List<Placemark> placemarks = await placemarkFromCoordinates(_currentPosition!.latitude, _currentPosition!.longitude);
+Placemark firstPlacemark = placemarks.first;
+String? placeName = firstPlacemark.name;
+ 
+  FirebaseDatabase.instance.ref('trajets').child(FirebaseAuth.instance.currentUser!.uid).push().set({
+  'date_debut': DateTime.now().toIso8601String(),
+ // 'date_fin': DateTime.now().toIso8601String(),
+  'position_depart': {
+  'latitude': placeName,
+   //'longitude':_currentPosition!.longitude,
+  },
+  'position_arrivee': {
+    'latitude': _destinationposition!.latitude,
+    'longitude': _destinationposition!.longitude,
+  },
+  
+  // Ajoutez d'autres détails du trajet si nécessaire
+});
 
 
 markersList.add (Marker (markerId: const MarkerId ("1"), position: LatLng (lat, lng)));
@@ -744,11 +883,10 @@ PolylinePoints polylinePoints = PolylinePoints();
   // Ajouter le marqueur de durée
   if (polylineCo.length > 1) {
     var durationText =
-        responseBody['routes'][0]['legs'][0]['duration']['text'];
-
+responseBody['routes'][0]['legs'][0]['duration']['text'];
     Marker durationMarker = Marker(
       markerId: MarkerId("durationMarker"),
-    
+    position: LatLng(_destinationposition!.latitude, _destinationposition!.longitude),
       infoWindow: InfoWindow(
         title: 'Duration',
         snippet: durationText,
@@ -757,18 +895,54 @@ PolylinePoints polylinePoints = PolylinePoints();
 
 // Before creating durationMarker
 print('Duration Text: $durationText');
-;
-    // Ajouter le marqueur à la liste des marqueurs
-    // Mettre à jour la liste des marqueurs sur la carte
-   /* setState(() {
-    markersList = Set<Marker>.of(markersList);
-    });*/
+    
     setState(() {
           markersList.add(durationMarker);
 
     });
+    // Mettre à jour la liste des marqueurs sur la carte
+    setState(() {
+  markersList = Set<Marker>.of(markersList);
+});
   }
 }
+
+ static Future<void>makePayment(int amount,String currency)async{
+    try {
+      String clientSecret=await _getClientSecret((amount*100).toString(), currency);
+      await _initializePaymentSheet(clientSecret);
+      await Stripe.instance.presentPaymentSheet();
+    } catch (error) {
+      throw Exception(error.toString());
+    }
+  }
+
+  static Future<void>_initializePaymentSheet(String clientSecret)async{
+    await Stripe.instance.initPaymentSheet(
+      paymentSheetParameters: SetupPaymentSheetParameters(
+        paymentIntentClientSecret: clientSecret,
+        merchantDisplayName: "Basel",
+      ),
+    );
+  }
+
+  static Future<String> _getClientSecret(String amount,String currency)async{
+    Dio dio=Dio();
+    var response= await dio.post(
+      'https://api.stripe.com/v1/payment_intents',
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer ${ApiKeys.secretkey}',
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+      ),
+      data: {
+        'amount': amount,
+        'currency': currency,
+      },
+    );
+    return response.data["client_secret"];
+  }
 
 
  }
