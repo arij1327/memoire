@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
 
 class ProfileUser extends StatefulWidget {
   const ProfileUser({super.key});
@@ -19,16 +21,19 @@ class _ProfileUserState extends State<ProfileUser> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Profile User"),
+        title: Text("Votre Profile ",style: TextStyle( fontStyle: FontStyle.italic,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,),),
       ),
       body: ListView.builder(itemBuilder: 
       (context,i) {
         return Column(
           children: [
-           /* CircleAvatar(
-              child:Image.network(data[i]['image']) ,
-            ),*/
-            
+SizedBox(height: 50,),
+            CircleAvatar(
+              child:Icon(Icons.person) ,
+            ),
+
            Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -37,7 +42,23 @@ class _ProfileUserState extends State<ProfileUser> {
              //   Text(data[i]['Prénom'],style: TextStyle(fontSize: 25),),
 
             ],
-           )
+           ),
+           SizedBox(height: 20,),
+
+
+  Padding(
+    padding: const EdgeInsets.only(left: 20),
+    child: Row(
+    children: [
+    Icon(
+                FontAwesomeIcons.envelope,
+                size: 30,
+                color: Colors.black,
+              ),
+              SizedBox(width: 20,),
+              Text(datauser[i]['email'],style: TextStyle(fontSize: 20),)],
+    ),
+  )
           ],
         );
 

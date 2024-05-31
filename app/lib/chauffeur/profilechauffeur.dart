@@ -4,10 +4,11 @@ import 'dart:convert';
 import 'package:app/authentification/login.dart';
 import 'package:app/chauffeur/detailcource.dart';
 import 'package:app/user/registeruser.dart';
+import 'package:background_location/background_location.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:http/http.dart' as http;
-import 'package:background_location/background_location.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -187,15 +188,8 @@ else {
       navigatorKey: navigatorKey,
       home: Scaffold(
         bottomNavigationBar: GNav(tabs: [
-          GButton(
-            icon: Icons.settings,
-            text: 'Setting',
-            onPressed: () {},
-          ),
-          GButton(
-            icon: Icons.star_rate,
-            text: 'Rating',
-          ),
+         
+         
           GButton(
             icon: Icons.exit_to_app,
             text: "Déconnecter",
@@ -226,7 +220,7 @@ else {
                   _isAvailable = newValue;
                 });
                 await _updateAvailability(newValue);
-                UpdateLocation();
+               UpdateLocation();
               },
               activeColor: Colors.blue,
               inactiveThumbColor: Colors.grey,
@@ -238,6 +232,7 @@ else {
           itemBuilder: (context, i) {
             return Column(
               children: [
+              
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -259,26 +254,26 @@ else {
     LocationPermission permission;
 
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      throw 'Location services are disabled.';
-    }
+    // if (!serviceEnabled) {
+    //   throw 'Location services are disabled.';
+    // }
     permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
+    // if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        throw 'Location permissions are denied';
-      }
-    }
-    if (permission == LocationPermission.deniedForever) {
-      throw 'Location permissions are permanently denied.';
-    }
-    if (permission == LocationPermission.whileInUse) {
+      // if (permission == LocationPermission.denied) {
+      //   throw 'Location permissions are denied';
+      // }
+    // }
+    // if (permission == LocationPermission.deniedForever) {
+    //   throw 'Location permissions are permanently denied.';
+    // }
+    // if (permission == LocationPermission.whileInUse) {
       Position position = await Geolocator.getCurrentPosition();
       print("====================================");
       print(position.latitude);
       print(position.longitude);
       print("====================================");
-    }
+    // }
   }
 
   Future<void> _updateAvailability(bool isAvailable) async {
@@ -336,21 +331,37 @@ else {
     }
   }
 
-  void UpdateLocation() {
-    BackgroundLocation.startLocationService(distanceFilter: 1);
-    BackgroundLocation.setAndroidConfiguration(1000);
 
+
+  
+
+   void UpdateLocation() {
+     BackgroundLocation.startLocationService();
+     BackgroundLocation.setAndroidConfiguration(1000);
+/* 
     BackgroundLocation.getLocationUpdates((location) {
       currentlat = location.latitude;
       currentlong = location.longitude;
       Future.delayed(Duration(seconds: 2));
-      timer = Timer.periodic(Duration(seconds: 10), (timer) {
+        FirebaseDatabase.instance.ref('position').child(FirebaseAuth.instance.currentUser!.uid).push().set({
+          'lat': currentlat,
+          'long': currentlong,
+        });
+    
+    }); */
+    
+   
+StreamSubscription<Position> positionStream = Geolocator.getPositionStream().listen(
+    (Position? position) {
+double? currentlat= position!.latitude;
+double? currentlong= position.longitude;
+
         FirebaseDatabase.instance.ref('position').child(FirebaseAuth.instance.currentUser!.uid).update({
           'lat': currentlat,
           'long': currentlong,
         });
       });
-    });
+    
   }
 
   Future<void> getDataUser() async {

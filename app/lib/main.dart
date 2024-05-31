@@ -22,6 +22,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 }
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
    await Firebase.initializeApp (
         options: DefaultFirebaseOptions.currentPlatform,
 );
@@ -75,6 +76,8 @@ class MyApp extends StatelessWidget {
         '/home': (context) =>homepage(),
       '/login': (context) =>LoginuserPage(),
             '/detail': (context) =>detailcource(),
+                        '/payment': (context) =>PaymentStripe(),
+
 
 
       

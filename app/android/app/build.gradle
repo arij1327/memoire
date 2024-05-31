@@ -61,6 +61,8 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig signingConfigs.debug
+             minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
@@ -74,6 +76,8 @@ dependencies {
     implementation 'com.google.firebase:firebase-messaging:<latest_version>'
     implementation'com.google.firebase:firebase-auth:22.3.0'
     implementation 'com.google.firebase:firebase-appcheck-debug:16.0.0'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
    
    
 }
