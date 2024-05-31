@@ -638,7 +638,7 @@ var body = {
    "adress": formattedAddress,
    "methode_payment":methodepayment.toString(),
    "prix":courcePrice.toString(),
-   //"firstname":firstname
+//   "firstname":firstname
 
     }
 };
