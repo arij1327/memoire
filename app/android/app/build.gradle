@@ -78,6 +78,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-appcheck-debug:16.0.0'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
-   
+// Update other Google Play services dependencies similarly
+
    
 }

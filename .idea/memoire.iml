@@ -96,6 +96,12 @@
       <excludeFolder url="file://$MODULE_DIR$/app/windows/flutter/ephemeral/.plugin_symlinks/firebase_storage/.dart_tool" />
       <excludeFolder url="file://$MODULE_DIR$/app/windows/flutter/ephemeral/.plugin_symlinks/firebase_storage/.pub" />
       <excludeFolder url="file://$MODULE_DIR$/app/windows/flutter/ephemeral/.plugin_symlinks/firebase_storage/build" />
+      <excludeFolder url="file://$MODULE_DIR$/app/windows/flutter/ephemeral/.plugin_symlinks/permission_handler_windows/example/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/app/windows/flutter/ephemeral/.plugin_symlinks/permission_handler_windows/example/build" />
+      <excludeFolder url="file://$MODULE_DIR$/app/windows/flutter/ephemeral/.plugin_symlinks/permission_handler_windows/example/.pub" />
+      <excludeFolder url="file://$MODULE_DIR$/app/windows/flutter/ephemeral/.plugin_symlinks/permission_handler_windows/build" />
+      <excludeFolder url="file://$MODULE_DIR$/app/windows/flutter/ephemeral/.plugin_symlinks/permission_handler_windows/.dart_tool" />
+      <excludeFolder url="file://$MODULE_DIR$/app/windows/flutter/ephemeral/.plugin_symlinks/permission_handler_windows/.pub" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

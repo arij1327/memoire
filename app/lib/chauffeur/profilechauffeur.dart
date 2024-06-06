@@ -8,6 +8,7 @@ import 'package:background_location/background_location.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:googleapis_auth/auth_io.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -33,49 +34,74 @@ class _DriverProfilePageState extends State<DriverProfilePage> {
   List data = [];
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
    Future<void> sendnotificationcource(title,messagee,token) async{
- 
+  String? Id_Driver= FirebaseAuth.instance.currentUser!.uid;
+
   
   
 
   
+
+    const String projectId = 'apptaxi-89d1b';
+
+  // Configuration pour l'authentification du compte de service
+  const _scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
+  var serviceAccountJson = r'''
+  {
+   "type": "service_account",
+  "project_id": "apptaxi-89d1b",
+  "private_key_id": "2c6aeee8ecbd561ec229e9a3c0b63a20e6404a15",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDBcTLwC5uxqeyE\nTh+nYh20ie5lozVugmBkp1RihZXgV5+E+rKh3WTU2q7FnD99pUHnRzY/f+6tEc64\n6/gCmMnU+yrVKGgSa6IAEjnHUtmoRYZ92cwViArk306IUzG66jV/7J7MI1wLBDvf\nubx8b64LxTlKbIvqjxdUGNe2XYl+9gyIghs3uqERVqvBLtua5ArJXpxVf1Vvw93B\nccfNRRrVybqs5MZxSsxAsaQM30xEUbPMIricEVjmi22TY/KTTh/p1kMLDPc1lQqh\nc8YQmCI8LnnyXudmGQeDxQo40aH/w3w4xRkIVOmvqGomMO+Bhejq+adv8G+6w6+l\nOFqBZ54ZAgMBAAECggEAM9FSb0n0wXE+yawxv4FBatC9+xzunbUwBBZsvN2C6e8e\n7JzJSCHJtlkEEyxJN6uSjVUem4D2GwdXpGKVc4ChJDvJ3AKwairJ4RIAxzuS0Yga\nQFEc4bGpFWkaHNuISUUe4q8sVIuuRscyELqs2nqCGWYR9DVCf6kn+x+SfSfuQoNH\n8AafCL62S9xSIVGWIsKZcB8L16IWTJF00YYKPxcffEOPa9ZFxMevBytNpRYvBt15\nsjqPh6oggtfGRcngtTruYrPrPWQ9Ex2LxkyZ1ZrnEanMETgH78pdfmWU8MfFHjv0\ne2Ds3+/CdS+Rs7fiGPE77hFSKM4bcI2stoKNwL99HwKBgQDyEw1jtkfnS+kQBpjV\n+6rHB1pFT089NPtEJN09s/wDpIT76Pw5hyzWGqJ4Tkrh8YSBgsqF7fTOvoO1VnQS\nim54efvwIiE0cxY4s82smL4ufEOKObrnYgcQe2ZUZGVTfAD6XtC8uM4hfrWvhQ9W\nZRmlMJ6nFTvO31y8M1+J0IMdgwKBgQDMkfTK4VaCHeAjVcwQkXgY1sDU445OA6bB\nkUfvP0Y9F/P01ojUnXN/N6Xjou8lF9hdl9DIYQUNYhXkWx7He9ay5Yyz9xwfoSEX\n/6cLnocMkV2YB7vVJX7ppG3MTZs9y8YGlQZ1+kEfr5pAnWs2XLCOMgslL/uW9Atr\nzfWnu2y/MwKBgQDa8NRpXNHHpmaSsgTFdKtO+51vln2qdCLVzSm0xvamLMSCOoT1\nWwb4VnqfqOAdXp1jrXGSlFeYLcNd3WV5525m1J1C4Pt7PqPYgPcCpdtMm+NSP0iG\nQaj2BUXWCj+CtGMGD39nURZOQRX+O7BViXcaatDzeUbwoiBzr1s3gDk2FQKBgQCf\n+ihYHB5dxOVKXMcn0cr8ibzk/0uDAOIAkA+ULoRMNJYoSzlYJAV1YFxPh1TDSkF+\n98FjYlPkImeCXCvWzqaY4mDFQCLzLTvHG7tTn9Z24psx0CJ4zkjQiDEBS1Ny4Q9s\niFA0JM+W6umTTEfSjGvZ15LVsw9p/lGMLdXFJRIm9wKBgQCFFl3whWaIxsmwbbWn\n4WUkTeGuPNIDXxdPc8WNk3NQvf3eKlMCjM9uUNsADb3HDV3qGYMZe9JQEjnH8wFd\nLnnKeOqObFRBInLtAtyCOC/QxshPB5Xn8kR8APv1JZ3q1pU3VHbzJUnykyfs/8Jp\nQFrDHrWkwOqLjVM2nKtwd0KKfw==\n-----END PRIVATE KEY-----\n",
+  "client_email": "apptaxi-89d1b@appspot.gserviceaccount.com",
+  "client_id": "106201903903504776927",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/apptaxi-89d1b%40appspot.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+  }
+  ''';
+
+  var accountCredentials = ServiceAccountCredentials.fromJson(serviceAccountJson);
+  var authClient = await clientViaServiceAccount(accountCredentials, _scopes);
   
  var headersList = {
-
- 'Accept': '*/*',
- 'Content-Type': 'application/json',
- 'Authorization': 'key=AAAAnjSkllc:APA91bEHbLsmo9hyqylkEfBp1f0YYCjKfo6K6mQbB61Th1yYliWw0bvvnsLv05dJC_PIVsk4AX4_z8B6thDi8_8otTFdKV1Te6mnL1txjyhgZ7pGwTkMvg91i5Obp3kh64ah93d9KD4d' 
-};
-var url = Uri.parse('https://fcm.googleapis.com/fcm/send');
-
- String? Id_Driver= FirebaseAuth.instance.currentUser!.uid;
+    'Content-Type': 'application/json; charset=UTF-8',
+    'Authorization': 'Bearer 2c6aeee8ecbd561ec229e9a3c0b63a20e6404a15'
+  };
 
 var body = {
-  "to": token,
-  "notification": {
-    "title":title,
-    "body":messagee ,
-    
-  },
-  "data":{
-
+  "message": {
+    "token": token,
+    "notification": {
+      "title": title,
+      "body": messagee,
+      
+    },
+      "data":{
 'identifiant':Id_Driver
+
     }
+  }
 };
 
-var req = http.Request('POST', url);
-req.headers.addAll(headersList);
-req.body = json.encode(body);
+ 
+  var url = Uri.parse('https://fcm.googleapis.com/v1/projects/$projectId/messages:send');
+  var req = http.Request('POST', url);
+  req.headers.addAll({
+    'Content-Type': 'application/json; charset=UTF-8',
+    'Authorization': 'Bearer ${authClient.credentials.accessToken.data}'
+  });
+  req.body = json.encode(body);
 
+  var res = await req.send();
+  final resBody = await res.stream.bytesToString();
 
-var res = await req.send();
-final resBody = await res.stream.bytesToString();
-
-if (res.statusCode >= 200 && res.statusCode < 300) {
-  print(resBody);
-}
-else {
-  print(res.reasonPhrase);
-}
+  if (res.statusCode >= 200 && res.statusCode < 300) {
+    print('Notification sent successfully: $resBody');
+  } else {
+    print('Failed to send notification: ${res.statusCode} - ${res.reasonPhrase}');
+    print('Response body: $resBody');
+  }
 }
 
   @override
@@ -125,6 +151,18 @@ else {
                     String token = message.data['token'];
                     sendnotification("Hello", "Le chauffeur a accepté votre course", token);
                   // Navigator.push(context, MaterialPageRoute(builder: (context) => detailcource()));
+//                      Navigator.pushNamed(context, '/detailcource', arguments: {
+//                          'id': message.data['id'],
+// 'adress':message.data['adress'],
+// 'payment':message.data['methode_payment'],
+// 'prix':message.data['prix'],
+//'token':message.data['token],
+// 'firstname':message.data['firstname'],
+
+
+
+                          
+//                         });
                   },
                   child: Text("Accepter"),
                 ),
@@ -135,6 +173,13 @@ else {
                   },
                   child: Text("Refuser"),
                 ),
+                //   TextButton(
+                //   onPressed: () {
+                //     String token = message.data['token'];
+                //     sendnotification("Hello", "Le chauffeur arrive", token);
+                //   },
+                //   child: Text("Arriver"),
+                // ),
                 TextButton(onPressed: (){
                                       String token = message.data['token'];
 
@@ -151,36 +196,74 @@ else {
        }
   }
 
-  Future<void> sendnotification(title, messagee, token) async {
-    var headersList = {
-      'Accept': '*/*',
-      'Content-Type': 'application/json',
-      'Authorization': 'key=AAAAnjSkllc:APA91bEHbLsmo9hyqylkEfBp1f0YYCjKfo6K6mQbB61Th1yYliWw0bvvnsLv05dJC_PIVsk4AX4_z8B6thDi8_8otTFdKV1Te6mnL1txjyhgZ7pGwTkMvg91i5Obp3kh64ah93d9KD4d'
-    };
-    var url = Uri.parse('https://fcm.googleapis.com/fcm/send');
+   Future<void> sendnotification(title,messagee,token) async{
+ 
+  
+ // var firstname= await getDataofUser();
+  String? token1 = await FirebaseMessaging.instance.getToken();
+String  id=FirebaseAuth.instance.currentUser!.uid;
+    const String projectId = 'apptaxi-89d1b';
 
-    var body = {
-      "to": token,
-      "notification": {
-        "title": title,
-        "body": messagee,
-      },
-      "data": {}
-    };
+  // Configuration pour l'authentification du compte de service
+  const _scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
+  var serviceAccountJson = r'''
+  {
+   "type": "service_account",
+  "project_id": "apptaxi-89d1b",
+  "private_key_id": "2c6aeee8ecbd561ec229e9a3c0b63a20e6404a15",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDBcTLwC5uxqeyE\nTh+nYh20ie5lozVugmBkp1RihZXgV5+E+rKh3WTU2q7FnD99pUHnRzY/f+6tEc64\n6/gCmMnU+yrVKGgSa6IAEjnHUtmoRYZ92cwViArk306IUzG66jV/7J7MI1wLBDvf\nubx8b64LxTlKbIvqjxdUGNe2XYl+9gyIghs3uqERVqvBLtua5ArJXpxVf1Vvw93B\nccfNRRrVybqs5MZxSsxAsaQM30xEUbPMIricEVjmi22TY/KTTh/p1kMLDPc1lQqh\nc8YQmCI8LnnyXudmGQeDxQo40aH/w3w4xRkIVOmvqGomMO+Bhejq+adv8G+6w6+l\nOFqBZ54ZAgMBAAECggEAM9FSb0n0wXE+yawxv4FBatC9+xzunbUwBBZsvN2C6e8e\n7JzJSCHJtlkEEyxJN6uSjVUem4D2GwdXpGKVc4ChJDvJ3AKwairJ4RIAxzuS0Yga\nQFEc4bGpFWkaHNuISUUe4q8sVIuuRscyELqs2nqCGWYR9DVCf6kn+x+SfSfuQoNH\n8AafCL62S9xSIVGWIsKZcB8L16IWTJF00YYKPxcffEOPa9ZFxMevBytNpRYvBt15\nsjqPh6oggtfGRcngtTruYrPrPWQ9Ex2LxkyZ1ZrnEanMETgH78pdfmWU8MfFHjv0\ne2Ds3+/CdS+Rs7fiGPE77hFSKM4bcI2stoKNwL99HwKBgQDyEw1jtkfnS+kQBpjV\n+6rHB1pFT089NPtEJN09s/wDpIT76Pw5hyzWGqJ4Tkrh8YSBgsqF7fTOvoO1VnQS\nim54efvwIiE0cxY4s82smL4ufEOKObrnYgcQe2ZUZGVTfAD6XtC8uM4hfrWvhQ9W\nZRmlMJ6nFTvO31y8M1+J0IMdgwKBgQDMkfTK4VaCHeAjVcwQkXgY1sDU445OA6bB\nkUfvP0Y9F/P01ojUnXN/N6Xjou8lF9hdl9DIYQUNYhXkWx7He9ay5Yyz9xwfoSEX\n/6cLnocMkV2YB7vVJX7ppG3MTZs9y8YGlQZ1+kEfr5pAnWs2XLCOMgslL/uW9Atr\nzfWnu2y/MwKBgQDa8NRpXNHHpmaSsgTFdKtO+51vln2qdCLVzSm0xvamLMSCOoT1\nWwb4VnqfqOAdXp1jrXGSlFeYLcNd3WV5525m1J1C4Pt7PqPYgPcCpdtMm+NSP0iG\nQaj2BUXWCj+CtGMGD39nURZOQRX+O7BViXcaatDzeUbwoiBzr1s3gDk2FQKBgQCf\n+ihYHB5dxOVKXMcn0cr8ibzk/0uDAOIAkA+ULoRMNJYoSzlYJAV1YFxPh1TDSkF+\n98FjYlPkImeCXCvWzqaY4mDFQCLzLTvHG7tTn9Z24psx0CJ4zkjQiDEBS1Ny4Q9s\niFA0JM+W6umTTEfSjGvZ15LVsw9p/lGMLdXFJRIm9wKBgQCFFl3whWaIxsmwbbWn\n4WUkTeGuPNIDXxdPc8WNk3NQvf3eKlMCjM9uUNsADb3HDV3qGYMZe9JQEjnH8wFd\nLnnKeOqObFRBInLtAtyCOC/QxshPB5Xn8kR8APv1JZ3q1pU3VHbzJUnykyfs/8Jp\nQFrDHrWkwOqLjVM2nKtwd0KKfw==\n-----END PRIVATE KEY-----\n",
+  "client_email": "apptaxi-89d1b@appspot.gserviceaccount.com",
+  "client_id": "106201903903504776927",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/apptaxi-89d1b%40appspot.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+  }
+  ''';
 
-    var req = http.Request('POST', url);
-    req.headers.addAll(headersList);
-    req.body = json.encode(body);
+  var accountCredentials = ServiceAccountCredentials.fromJson(serviceAccountJson);
+  var authClient = await clientViaServiceAccount(accountCredentials, _scopes);
+  
+ var headersList = {
+    'Content-Type': 'application/json; charset=UTF-8',
+    'Authorization': 'Bearer 2c6aeee8ecbd561ec229e9a3c0b63a20e6404a15'
+  };
 
-    var res = await req.send();
-    final resBody = await res.stream.bytesToString();
+var body = {
+  "message": {
+    "token": token,
+    "notification": {
+      "title": title,
+      "body": messagee,
+      
+    },
+      "data":{
+   
 
-    if (res.statusCode >= 200 && res.statusCode < 300) {
-      print(resBody);
-    } else {
-      print(res.reasonPhrase);
     }
   }
+};
+
+ 
+  var url = Uri.parse('https://fcm.googleapis.com/v1/projects/$projectId/messages:send');
+  var req = http.Request('POST', url);
+  req.headers.addAll({
+    'Content-Type': 'application/json; charset=UTF-8',
+    'Authorization': 'Bearer ${authClient.credentials.accessToken.data}'
+  });
+  req.body = json.encode(body);
+
+  var res = await req.send();
+  final resBody = await res.stream.bytesToString();
+
+  if (res.statusCode >= 200 && res.statusCode < 300) {
+    print('Notification sent successfully: $resBody');
+  } else {
+    print('Failed to send notification: ${res.statusCode} - ${res.reasonPhrase}');
+    print('Response body: $resBody');
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -202,6 +285,7 @@ else {
                     TextButton(onPressed: () async {
                       await FirebaseAuth.instance.signOut();
                       Navigator.push(context, MaterialPageRoute(builder: (context) => SignupUserPage()));
+                      
                     }, child: Text("Ok")),
                     TextButton(onPressed: () {}, child: Text("Annuler"))
                   ],
@@ -220,7 +304,9 @@ else {
                   _isAvailable = newValue;
                 });
                 await _updateAvailability(newValue);
-               UpdateLocation();
+             await UpdateLocation();
+           //  initPlatformState();
+
               },
               activeColor: Colors.blue,
               inactiveThumbColor: Colors.grey,
@@ -332,23 +418,22 @@ else {
   }
 
 
+Future<void> UpdateLocation()async {
+  // Start the background location service
+  BackgroundLocation.startLocationService();
 
-  
+   BackgroundLocation.setAndroidConfiguration(1000);
 
-   void UpdateLocation() {
-     BackgroundLocation.startLocationService();
-     BackgroundLocation.setAndroidConfiguration(1000);
-/* 
-    BackgroundLocation.getLocationUpdates((location) {
-      currentlat = location.latitude;
-      currentlong = location.longitude;
-      Future.delayed(Duration(seconds: 2));
-        FirebaseDatabase.instance.ref('position').child(FirebaseAuth.instance.currentUser!.uid).push().set({
-          'lat': currentlat,
-          'long': currentlong,
-        });
+    // BackgroundLocation.getLocationUpdates((location) {
+    //   currentlat = location.latitude;
+    //   currentlong = location.longitude;
+    //   Future.delayed(Duration(seconds: 2));
+    //     FirebaseDatabase.instance.ref('position').child(FirebaseAuth.instance.currentUser!.uid).push().set({
+    //       'lat': currentlat,
+    //       'long': currentlong,
+    //     });
     
-    }); */
+    // }); 
     
    
 StreamSubscription<Position> positionStream = Geolocator.getPositionStream().listen(
@@ -376,5 +461,10 @@ double? currentlong= position.longitude;
     } else {
       print("Document does not exist");
     }
+  }
+   refrechtoken(){
+    FirebaseMessaging.instance.onTokenRefresh.listen((token) {
+
+     });
   }
 }

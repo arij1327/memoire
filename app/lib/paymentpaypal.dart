@@ -54,7 +54,7 @@ class _PaymentStripeState extends State<PaymentStripe> {
         ElevatedButton(
   onPressed: price1 != null
     ? () async {
-        bool paymentSuccess = await PaymentManager.makePayment(price1!, "EGP", context);
+        bool paymentSuccess = await PaymentManager.makePayment(price1!, "USD", context);
         if (paymentSuccess) {
           _showRatingDialog(context);
         } else {
@@ -75,6 +75,8 @@ static void _showRatingDialog(BuildContext context) {
    final arguments =
         ModalRoute.of(context)?.settings.arguments as Map<dynamic, dynamic>;
     dynamic id = arguments['id'];
+
+
 
 
  

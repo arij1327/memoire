@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
@@ -6,6 +8,31 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 
 import 'loginuser.dart'; // Importez le fichier contenant la page de connexion utilisateur
+
+Future<String> checkTaxiNumberExists(String taxiNumber) async {
+    try {
+      DatabaseReference reff = FirebaseDatabase.instance.ref('position');
+      Query queryRef = reff.orderByChild('Numéro du taxi').equalTo(taxiNumber);
+      DatabaseEvent event = await queryRef.once();
+      DataSnapshot snapshot = event.snapshot;
+
+      if (snapshot.exists) {
+        return 'Ce numéro de taxi existe déjà.';
+      } else {
+        return 'valide';
+      }
+    } catch (e) {
+      print('Erreur lors de la vérification du numéro de taxi: $e');
+      return 'erreur';
+    }
+  }
+
+  // Fonction de validateur personnalisé pour le TextFormField
+  String? validateTaxiNumber(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Veuillez entrer un numéro de taxi';
+    }
+    }
 
 class SignupUserPage extends StatefulWidget {
   const SignupUserPage({Key? key}) : super(key: key);
@@ -27,6 +54,35 @@ class _SignupPageState extends State<SignupUserPage> {
   final List<String> models = ["Fiat", "Ford", "Hyundai", "KIA", "Peugeot", "Renault"];
   String? choosevalue;
   String? choosevalue1;
+
+  checkTaxiNumberExists(String taxiNumber) async {
+  print("check taxi");
+    try {
+      DatabaseReference reff = FirebaseDatabase.instance.ref().child('position');
+
+      Query queryRef = reff.orderByChild('Numéro du taxi').equalTo(taxiNumber);
+
+      DatabaseEvent event = await queryRef.once(); 
+
+      DataSnapshot snapshot = event.snapshot;
+
+      if (snapshot.exists) {
+        print("exist");
+        return 'Ce numéro de taxi existe déjà.';
+        
+      } else {
+        print("non");
+        return 'valid';
+      }
+    } catch (e) {
+      print('Error checking taxi number: $e');
+      return 'error';
+    }
+  }
+  
+
+    // Appel de la fonction checkTaxiNumberExists pour vérifier si le numéro de taxi existe déjà
+
   
      Future<void> addUser() async {
 
@@ -71,36 +127,94 @@ class _SignupPageState extends State<SignupUserPage> {
 
           body: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.all(30.0),
+              padding: const EdgeInsets.all(45.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                     Padding(padding: EdgeInsets.only(top :30)),
                   // Ajout des champs pour le prénom et le nom
-                  TextField(
+                  TextFormField(
                     controller: _prenomController,
-                    decoration: InputDecoration(labelText: 'Prénom'),
+                    decoration: InputDecoration(labelText: 'Prénom',
+                      border: OutlineInputBorder(
+                               borderRadius: BorderRadius.circular(20),
+                         ),),
                   ),
-                  TextField(
+                  SizedBox(height: 12,),
+                  TextFormField(
                     controller: _userController,
-                    decoration: InputDecoration(labelText: 'Nom'),
+                    decoration: InputDecoration(labelText: 'Nom',
+                      border: OutlineInputBorder(
+                               borderRadius: BorderRadius.circular(20),
+                         ),),
                   ),
+                                    SizedBox(height: 12,),
+
                   // Ajout du champ pour l'adresse email
-                  TextField(
+                  TextFormField(
+                        validator: (email) {
+                      String pattern =
+                                  r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
+                              RegExp regex = RegExp(pattern);
+                               if (email!.isEmpty) {
+                                return 'Ce champ est obligatoire';
+                              }
+                              if (!regex.hasMatch(email)) {
+                                 return 'S"il vous plaît, mettez une adresse email valide';
+                              } else {
+                                 return null;
+                              }
+                  },
                     controller: _emailController,
-                    decoration: InputDecoration(labelText: 'Adresse Email'),
+                    decoration: InputDecoration(labelText: 'Adresse Email',
+                      border: OutlineInputBorder(
+                               borderRadius: BorderRadius.circular(20),
+                         ),),
                   ),
+                                    SizedBox(height: 12,),
+
                   // Ajout des champs pour le mot de passe et sa confirmation
-                  TextField(
+                  TextFormField(
+                                   validator: (password) {
+                             if (password == null || password.isEmpty) {                                 return 'Veuillez entrer un mot de passe.';
+                              }
+
+                              // Vérifier la longueur du mot de passe
+                              if (password.length < 6) {
+                                 return 'Le mot de passe doit contenir au moin 6 caractères.';                               }
+
+                               // Vérifier la présence d'au moins une minuscule
+                               if (!password.contains(RegExp(r'[a-z]'))) {
+                                 return 'Le mot de passe doit contenir au moins une lettre minuscule.';
+                              }
+
+                               // Vérifier la présence d'au moins une majuscule
+                               if (!password.contains(RegExp(r'[A-Z]'))) {
+                                return 'Le mot de passe doit contenir au moins une lettre majuscule.';
+                              }
+
+                              // Vérifier la présence d'au moins un chiffre
+                               if (!password.contains(RegExp(r'[0-9]'))) {
+                                 return 'Le mot de passe doit contenir au moins un chiffre.';                               }
+
+                             // Vérifier la présence d'au moins un caractère spécial
+                             if (!password.contains(
+                                  RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) {
+                              return 'Le mot de passe doit contenir au moins un caractère spécial.';
+                             }
+
+                              return null;
+                           },
                     controller: _passwordController,
                     obscureText: true,
-                    decoration: InputDecoration(labelText: 'Mot de passe'),
+                    decoration: InputDecoration(labelText: 'Mot de passe',
+                     border: OutlineInputBorder(
+                               borderRadius: BorderRadius.circular(20),
+                         ),
+                    ),
                   ),
-                  TextField(
-                    controller: _confirmpasswordController,
-                    obscureText: true,
-                    decoration: InputDecoration(labelText: 'Confirmez le mot de passe'),
-                  ),
+                                 SizedBox(height: 12,),
+
                   // Dropdown pour sélectionner le type d'utilisateur (utilisateur ou chauffeur)
                   DropdownButtonFormField<String>(
                     value: choosevalue ?? 'utilisateur',
@@ -116,27 +230,37 @@ class _SignupPageState extends State<SignupUserPage> {
                       );
                     }).toList(),
                   ),
+                                    SizedBox(height: 12,),
+
                   // Condition pour afficher les champs supplémentaires si le type d'utilisateur est "chauffeur"
                   if (choosevalue == 'chauffeur') ...[
                     // Champ pour le numéro de taxi
-                    TextField(
-                       onSubmitted: (value)async {
-      checkTaxiNumberExists(value);
-                 },
-                      controller: usernumController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(labelText: 'Numéro du Taxi'),
-                        
-                      
-                    ),
+                    TextFormField(
+  controller: usernumController,
+  keyboardType: TextInputType.number,
+  decoration: InputDecoration(
+    labelText: 'Numéro du Taxi',
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(20),
+    ),
+  ),
+  validator: validateTaxiNumber, // Utilisation du validateur personnalisé
+),
+                                      SizedBox(height: 12,),
+
                     // Champ pour le matricule
-                    TextField(
+                    TextFormField(
                       controller: usermatController,
-                      decoration: InputDecoration(labelText: 'Matricule'),
+                      decoration: InputDecoration(labelText: 'Matricule',
+                       border: OutlineInputBorder(
+                               borderRadius: BorderRadius.circular(20),
+                         ),),
                     ),
                   ],
+                                    SizedBox(height: 12,),
+
                   // Champs pour le numéro de téléphone
-                  TextField(
+                  TextFormField(
                     controller: userphoneController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
@@ -154,8 +278,13 @@ class _SignupPageState extends State<SignupUserPage> {
                         },
                         child: Text("${selectedCountry.flagEmoji} +${selectedCountry.phoneCode}", style: TextStyle(fontSize: 20)),
                       ),
+                        border: OutlineInputBorder(
+                               borderRadius: BorderRadius.circular(20),
+                         )
                     ),
                   ),
+                                    SizedBox(height: 12,),
+
                   // Dropdown pour sélectionner le modèle de voiture (uniquement pour les chauffeurs)
                   if (choosevalue == 'chauffeur') ...[
                     DropdownButtonFormField<String>(
@@ -173,6 +302,8 @@ class _SignupPageState extends State<SignupUserPage> {
                       }).toList(),
                     ),
                   ],
+                                    SizedBox(height: 12,),
+
                   // Bouton pour s'inscrire
                   ElevatedButton(
                     onPressed: () async {
@@ -235,14 +366,18 @@ class _SignupPageState extends State<SignupUserPage> {
                       } catch (e) {
                         print(e);
                       }
+                      
                     },
-                    child: Text("S'inscrire"),
+                     style: ElevatedButton.styleFrom(
+             minimumSize: Size(250, 30)
+                       ),
+                    child: Text("S'inscrire",style: TextStyle(color: Colors.black),),
                   ),
         
                    Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Text("Already have an account?"),
+                                  Text("Avez vous un compte?"),
                                   SizedBox(width: 5),
                                   GestureDetector(
                                     onTap: () {
@@ -255,7 +390,7 @@ class _SignupPageState extends State<SignupUserPage> {
                                     child: Text(
                                       "Enregistrer",
                                       style: TextStyle(
-                                        color:Color(0xFF53bcbd),
+                                        color:Colors.black,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -273,28 +408,7 @@ class _SignupPageState extends State<SignupUserPage> {
       ],
     );
   }
+  
 
-Future<String> checkTaxiNumberExists(String taxiNumber) async {
-  try {
-    // Get a reference to the 'chauffeur' collection
-    DatabaseReference reff = FirebaseDatabase.instance.ref().child('chauffeur');
-    
-    // Query the database to check if the taxi number exists
-    Query queryRef = reff.orderByChild('Numéro du taxi').equalTo(taxiNumber);
-    DataSnapshot snapshot = await queryRef.get();
-    
-    // Check if the snapshot contains any data
-    if (snapshot.exists) {
-      // Taxi number exists
-      return 'Ce numéro de taxi existe déjà.';
-    } else {
-      // Taxi number does not exist
-      return 'valid';
-    }
-  } catch (e) {
-    // Handle any errors
-    print('Error checking taxi number: $e');
-    return 'error'; // Indicate an error occurred
-  }
-}
+  
 }

@@ -3,6 +3,7 @@ buildscript {
     repositories {
         google()
         mavenCentral()
+    
     }
 
     dependencies {
@@ -20,6 +21,9 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+          flatDir {
+        dirs 'libs'  // ajouter cette ligne
+    }
     }
 }
 

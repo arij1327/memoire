@@ -13,14 +13,34 @@ class detailcource extends StatefulWidget {
 class _detailcourceState extends State<detailcource> {
   @override
   Widget build(BuildContext context) {
+      final arguments =
+        ModalRoute.of(context)?.settings.arguments as Map<dynamic, dynamic>;
+    dynamic adress=arguments['adress'];
+    dynamic payment=arguments['payment'];
+     dynamic prix=arguments['prix'];
+     dynamic token=arguments['token'];
+     dynamic firstname=arguments['firstname'];
+
     return Scaffold(
       body: Column(
         children: [
-          ElevatedButton(onPressed: (){
-            // send notification au user 
-          //  sendnotificationcource("couce terminé", "couce terminé", token)
-        
-          }, child: Text("cource terminé"))
+Text("$firstname"),
+          Text("$adress"),
+          Text("$payment"),
+          Text("$prix"),
+              
+         TextButton(onPressed: (){
+                                      
+
+                  sendnotificationcource("Chauffeur arrivé", "Chauffeur arrivé", token);
+                }, child: Text("Chauffeur arrivé")),
+
+         TextButton(onPressed: (){
+                                      
+
+                  sendnotificationcource("couce terminé", "couce terminé", token);
+                }, child: Text("cource terminé")),
+                
         ],
       ),
     );
