@@ -11,7 +11,7 @@ xmlns:tools="http://schemas.android.com/tools">
     <application
     
        tools:replace="android:label"
-        android:label="app"
+        android:label="LuxBlack"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <meta-data android:name="com.google.android.geo.API_KEY"
@@ -60,7 +60,7 @@ xmlns:tools="http://schemas.android.com/tools">
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-       
+      
         
         <!-- Firebase Services --> 
     </application>

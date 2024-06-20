@@ -19,6 +19,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_address_from_latlng/flutter_address_from_latlng.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
@@ -150,7 +151,7 @@ bool destinationChosen = false;
   LatLng? l;
   LatLng? _currentPositionchauff;
   final double radiusInKm = 0.1;
-   // LatLng? _currentPositionchauff;
+   // LatLng? _currentPositionchauff;<
    bool selected= false;
     String ?selectedMethodePayment='';
  int? courcePrice;
@@ -164,6 +165,7 @@ bool destinationChosen = false;
 
   @override
   void initState() {
+    
      _animationController = AnimationController(
       duration: const Duration(seconds: 2), // Adjust the duration as needed
       vsync: this,
@@ -175,6 +177,7 @@ bool destinationChosen = false;
       });
    
   FirebaseMessaging.onMessageOpenedApp.listen((message) async {
+   
     if (message.notification!.body == "Le chauffeur a accepté votre course") {
          _animationController.reset();
         _animationController.forward();
@@ -182,22 +185,18 @@ bool destinationChosen = false;
           context: context,
           builder: (context) {
             return AlertDialog(
-              title: Text('Chauffeur trouvé'),
+              
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   Text(
-                    'Chauffeur trouvé',
+                    'Voulez vous confirmé la course? ',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  SizedBox(height: 20),
-                  Text(
-                    'En attente de confirmation de la demande\nde la part du chauffeur',
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  
                   SizedBox(height: 40),
                   AnimatedBuilder(
                     animation: _animation,
@@ -210,27 +209,47 @@ bool destinationChosen = false;
                     },
                   ),
                   SizedBox(height: 40),
-                  Row(
+               Column(children: [   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      CircleAvatar(
-                        radius: 30,
-                        backgroundImage: AssetImage('assets/driver.png'), // Replace with your driver image
-                      ),
+                     Text(
+                    'Annuler la course',
+                    style: TextStyle(fontSize: 16),
+                  ), 
                       SizedBox(width: 40),
                       IconButton(
                         icon: Icon(Icons.cancel_outlined),
                         onPressed: () {
-                          // Handle cancel action
+                          String token = message.data['tok'];
+                         Navigator.pop(context);
+                         sendnotification("Annulation du course ","utilisateur a annulé la course", token);
+                     repeatSearchDestination();
                         },
                       ),
                     ],
                   ),
-                  SizedBox(height: 20),
-                  Text(
-                    'Annuler la course',
+                   Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                     Text(
+                    'Confirmer la course',
                     style: TextStyle(fontSize: 16),
+                  ), 
+                      SizedBox(width: 40),
+                      IconButton(
+                        icon: Icon(Icons.check),
+                        onPressed: () {
+                        
+                          sendnotification("Confirmation du course ","utilisateur a confirmé la course", message.data['tok']);
+                      Navigator.pop(context);
+                        // repeatSearchDestination();
+                        },
+                      ),
+                    ],
                   ),
+                  ],),
+                  SizedBox(height: 20),
+                 
                 ],
               ),
               actions: <Widget>[
@@ -244,35 +263,103 @@ bool destinationChosen = false;
             );
           },
         );
+             
+  
+      
       }
     });
 
   
      FirebaseMessaging.onMessage.listen((message)async {
-        List<Placemark> placemarks = await placemarkFromCoordinates(_currentPosition!.latitude, _currentPosition!.longitude);
-Placemark firstPlacemark = placemarks.first;
-String? placeName = firstPlacemark.name;
-
-  String dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
-       if(message.notification!.body == "Le chauffeur a accepté votre course"){
-          FirebaseDatabase.instance.ref('trajets').child(FirebaseAuth.instance.currentUser!.uid).push().set({
-  'date_debut': dateFormat,
-  'prix':courcePrice,
-  'monthYear':DateTime.now().month,
- // 'date_fin': DateTime.now().toIso8601String(),
+        
+       
+    if (message.notification!.body == "Le chauffeur a accepté votre course") {
+         _animationController.reset();
+        _animationController.forward();
+  showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(
+                    'Voulez vous confirmé la course? ',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  
+                  SizedBox(height: 40),
+                  AnimatedBuilder(
+                    animation: _animation,
+                    builder: (context, child) {
+                      return LinearProgressIndicator(
+                        value: _animation.value,
+                        backgroundColor: Colors.grey[300],
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                      );
+                    },
+                  ),
+                  SizedBox(height: 40),
+               Column(children: [   Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                     Text(
+                    'Annuler la course',
+                    style: TextStyle(fontSize: 16),
+                  ), 
+                      SizedBox(width: 40),
+                      IconButton(
+                        icon: Icon(Icons.cancel_outlined),
+                        onPressed: () {
+                         Navigator.pop(context);
+                         sendnotification("Annulation du course ","utilisateur a annulé la course ", message.data['id']);
+                         repeatSearchDestination();
+                        },
+                      ),
+                    ],
+                  ),
+                   Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                     Text(
+                    'Confirmer la course',
+                    style: TextStyle(fontSize: 16),
+                  ), 
+                      SizedBox(width: 40),
+                      IconButton(
+                        icon: Icon(Icons.check),
+                        onPressed: () {
+                         Navigator.pop(context);
+                     
+                         repeatSearchDestination();
+                        },
+                      ),
+                    ],
+                  ),
+                  ],),
+                  SizedBox(height: 20),
+                 
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: Text('Fermer'),
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                ),
+              ],
+            );
+          },
+        );
+             
   
-  'latitude': placeName,
-   //'longitude':_currentPosition!.longitude,
-  
-  'position_arrivee': {
-    'latitude': _destinationposition!.latitude,
-    'longitude': _destinationposition!.longitude,
-  },
-  
-  // Ajoutez d'autres détails du trajet si nécessaire
-});
-    
-    }
+      
+      }
   });
   
     //getnotification();
@@ -283,7 +370,8 @@ String? placeName = firstPlacemark.name;
    //_getNearbyDrivers();
 
     super.initState();
-    _loadNearbyDrivers();
+    
+  
 
   
 FirebaseMessaging.onMessageOpenedApp.listen((message) {
@@ -320,20 +408,122 @@ handleDriverRefusal();
 
 
 
+FirebaseMessaging.onMessage.listen((message)async { 
 
-  
-    FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      if (message.notification?.body == "couce terminé") {
+      if (message.notification?.body == "Course terminé") {
+      
        
-                        if (selectedMethodePayment == "Paypal") {
+                        if (selectedMethodePayment == "Stripe") {
    Navigator.pushNamed(context, '/payment', arguments: {
                          'id': message.data['identifiant']
                           
                         });
 
+      }else if(selectedMethodePayment== "Espèce"){
+         showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          content: RatingDialog(
+            initialRating: 1.0,
+            title: Text(
+              'Quel est votre avis sur le service du taxi',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 25,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            message: Text(
+              'Tap a star to set your rating. Add more description here if you want.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15),
+            ),
+            image: const FlutterLogo(size: 100),
+            submitButtonText: 'Submit',
+            commentHint: 'Set your custom comment hint',
+            onCancelled: () => print('cancelled'),
+            onSubmitted: (response) {
+              print('rating: ${response.rating}, comment: ${response.comment}');
+              // Call your submitRating function here
+              submitRating(response.rating, response.comment,message.data['id']);
+            },
+          ),
+        );
+      },
+    );
       }
+
   }});
 
+
+  
+    FirebaseMessaging.onMessageOpenedApp.listen((message)async {
+      
+      if (message.notification?.body == "Course terminé") {
+   
+       
+                        if (selectedMethodePayment == "Stripe") {
+   Navigator.pushNamed(context, '/payment', arguments: {
+                         'id': message.data['identifiant']
+                          
+                        });
+
+      }else if(selectedMethodePayment== "Espèce"){
+         showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          content: RatingDialog(
+            initialRating: 1.0,
+            title: Text(
+              'Quel est votre avis sur le service du taxi',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 25,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            message: Text(
+              'Tap a star to set your rating. Add more description here if you want.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15),
+            ),
+            image: const FlutterLogo(size: 100),
+            submitButtonText: 'Submit',
+            commentHint: 'Set your custom comment hint',
+            onCancelled: () => print('cancelled'),
+            onSubmitted: (response) {
+              print('rating: ${response.rating}, comment: ${response.comment}');
+              // Call your submitRating function here
+              submitRating(response.rating, response.comment,message.data['id']);
+            },
+          ),
+        );
+      },
+    );
+      }
+
+  }});
+
+  }
+   static Future<void> submitRating(double rating, String comment, id) async {
+    try {
+      // Enregistrer la notation dans Firebase Database
+      await FirebaseDatabase.instance
+          .ref('rating')
+         .child(id.toString())
+          .push()
+          .set({
+        // ID de l'utilisateur actuel
+        'rating': rating.toString(),
+        'comment': comment.toString(),
+        'timestamp': DateTime.now().toIso8601String(),
+      });
+      print('Notation soumise avec succès !');
+    } catch (e) {
+      print('Échec de la soumission de la notation : $e');
+    }
   }
    
      Future<void> handleDriverRefusal() async {
@@ -365,6 +555,10 @@ handleDriverRefusal();
   try {
     List<Map<String, dynamic>> drivers = await findNearbyDrivers();
     Provider.of<DriverNotifier>(context, listen: false).setNearbyDrivers(drivers);
+   setState(() {
+     courcePrice;
+   });
+   
     print("Drivers loaded successfully: $drivers");
   } catch (error) {
     print("Error loading drivers: $error");
@@ -546,92 +740,105 @@ handleDriverRefusal();
           child: CustomScrollView(
             controller: scrollController,
             slivers: [
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (BuildContext context, int index) {
-                    if (index < driverNotifier.nearbyDrivers.length) {
-                      Map<String, dynamic> driver = driverNotifier.nearbyDrivers[index];
-                      return ListTile(
-                        leading: Image.asset("asset/logotaxi.jpg", width: 80),
-                        title: Text(driver['nom']),
-                        subtitle: Text('Prix: ${driver['prenom']} DT'),
-                        trailing: Column(
-                          children: [
-                            ElevatedButton(
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return AlertDialog(
-                                      title: Row(
-                                        children: [
-                                          IconButton(
-                                            onPressed: () {
-                                              Navigator.pop(context);
-                                            },
-                                            icon: Icon(Icons.arrow_back),
-                                          ),
-                                          Text(
-                                            "Choisissez votre mode de paiement",
-                                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                                          ),
-                                        ],
-                                      ),
-                                      content: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          RadioListTile(
-                                            value: "Espèce",
-                                            groupValue: selectedMethodePayment,
-                                            onChanged: (val) {
-                                              setState(() {
-                                                selectedMethodePayment = val as String?;
-                                              });
-                                            },
-                                            title: Text("Espèce"),
-                                            subtitle: Text("Payez en espèces au lieu de déposer"),
-                                          ),
-                                          RadioListTile(
-                                            value: "Paypal",
-                                            groupValue: selectedMethodePayment,
-                                            onChanged: (val) {
-                                              setState(() {
-                                                selectedMethodePayment = val as String?;
-                                              });
-                                            },
-                                            title: Text("Paypal"),
-                                            subtitle: Text("Payez avec Paypal"),
-                                          ),
-                                        ],
-                                      ),
-                                      actions: <Widget>[
-                                        TextButton(
-                                          onPressed: () {
-                                            sendnotification("hello", "notification", driver['token']);
-                                            Navigator.pop(context);
-                                          },
-                                          child: Text("Confirmer"),
-                                        )
-                                      ],
-                                    );
-                                  },
-                                );
-                                   //handleDriverRefusal();
-
-                               },
-                              child: Text('Envoyer Notification'),
-                            ),
-                          
-                          ],
-                        ),
-                      );
-                    } else {
-                      return null;
-                    }
-                  },
-                  childCount: 1,
-                ),
+             SliverList(
+  delegate: SliverChildBuilderDelegate(
+    (BuildContext context, int index) {
+      if (index < driverNotifier.nearbyDrivers.length) {
+        Map<String, dynamic> driver = driverNotifier.nearbyDrivers[index];
+        return Column(
+          children: [
+            ListTile(
+              leading: Image.asset("asset/logotaxi.jpg", width: 80),
+              title: Row(
+                children: [
+                  Text(driver['nom']),
+                  SizedBox(width: 5),
+                  Text(driver['prenom']),
+                ],
               ),
+              subtitle: Text('Prix: ${driver['prix']} TND'),
+              trailing: Text(driver['voiture']),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                   
+                    return StatefulBuilder(
+                      builder: (BuildContext context, StateSetter setState) {
+                        return AlertDialog(
+                          title: Row(
+                            children: [
+                              IconButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                                icon: Icon(Icons.arrow_back),
+                              ),
+                              Text(
+                                "Choisir le mode de paiement",
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              RadioListTile(
+                                value: "Espèce",
+                                groupValue: selectedMethodePayment,
+                                onChanged: (val) {
+                                  setState(() {
+                                    selectedMethodePayment = val as String?;
+                                  });
+                                },
+                                title: Text("Espèce"),
+                                subtitle: Text("Payez en espèces au lieu de déposer"),
+                              ),
+                              RadioListTile(
+                                value: "Stripe",
+                                groupValue: selectedMethodePayment,
+                                onChanged: (val) {
+                                  setState(() {
+                                    selectedMethodePayment = val as String?;
+                                  });
+                                },
+                                title: Text("Stripe"),
+                                subtitle: Text("Payez avec carte de crédit"),
+                              ),
+                            ],
+                          ),
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () {
+                                sendnotification("hello", "notification", driver['token']);
+                                Navigator.pop(context);
+                              },
+                              child: Text("Confirmer"),
+                            )
+                          ],
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+              child: Text('Envoyer Notification'),
+            ),
+          ],
+        );
+      } else {
+        return null;
+      }
+    },
+    childCount: 1,
+  ),
+)
+
             ],
           ),
         );
@@ -692,10 +899,19 @@ Future getAdress()async{
   googleApiKey: "AIzaSyC7ckSip1a_oVGM1y7nPSWGUdTEPbkANIA",);
   return formattedAddress;
 }
+Future getdestination()async{
+    Position position= await Geolocator.getCurrentPosition();
+   String destination = await FlutterAddressFromLatLng().getFormattedAddress(
+  latitude: _destinationposition!.latitude,
+  longitude: _destinationposition!.longitude,
+  googleApiKey: "AIzaSyC7ckSip1a_oVGM1y7nPSWGUdTEPbkANIA",);
+  return destination;
+}
 
 
   Future<void> sendnotification(title,messagee,token) async{
  var formattedAddress = await getAdress();
+ var destination= await getdestination();
  String? methodepayment=selectedMethodePayment;
   
   //var firstname= await getDataofUser();
@@ -723,6 +939,7 @@ var body = {
   "data":{
      "token":token1,
    "adress": formattedAddress,
+   "destination":destination,
    "methode_payment":methodepayment.toString(),
    "prix":courcePrice.toString(),
 //   "firstname":firstname
@@ -758,64 +975,118 @@ getAddressFromCoordinates()async{
 
 return formattedAddress;}
 
-Future<double> calculateDistance(double lat1, double lon1, double lat2, double lon2) async {
-  return await Geolocator.distanceBetween(lat1, lon1, lat2, lon2);
-}
-
 Future<List<Map<String, dynamic>>> findNearbyDrivers() async {
-  List<Map<String, dynamic>> nearbyDrivers = [];
+    List<Map<String, dynamic>> nearbyDrivers = [];
+      List<Placemark> placemarks = await placemarkFromCoordinates(_currentPosition!.latitude, _currentPosition!.longitude);
+Placemark firstPlacemark = placemarks.first;
+String? placeName = firstPlacemark.name;
 
-  try {
-    // Récupérer le snapshot de la base de données Firebase
-    var snapshot = await FirebaseDatabase.instance.reference().child('position').once();
+  String dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
 
-    // Utiliser la méthode DataSnapshot du snapshot pour obtenir les données
-    DataSnapshot dataSnapshot = snapshot.snapshot;
+    try {
+      
+      var snapshot = await FirebaseDatabase.instance.ref().child('position').once();
 
-    var value = dataSnapshot.value;
-    
-    // Vérifier si la valeur est bien de type Map<dynamic, dynamic>
-    if (value is Map<dynamic, dynamic>) {
-      Map<dynamic, dynamic> data = value;
-      data.forEach((key, value) {
-        var lat = value['lat'];
-        var lng = value['long'];
-        var nom = value['Nom'];
-        var prenom = value['Prénom'];
- var availibility = value['isAvailable'];
-      var tokench = value['token'];
+      DataSnapshot dataSnapshot = snapshot.snapshot;
 
-        if (lat != null && lng != null && availibility==true) {
-          double distance = Geolocator.distanceBetween(
-  _currentPosition?.latitude ?? 0.0,
-  _currentPosition?.longitude ?? 0.0,
-  lat,
-  lng,
-);
+      var value = dataSnapshot.value;
 
-double dis = Geolocator.distanceBetween(
-  _currentPosition?.latitude ?? 0.0,
-  _currentPosition?.longitude ?? 0.0,
-  _destinationposition?.latitude ?? 0.0,
-  _destinationposition?.longitude ?? 0.0,
-);
-          
-              
-nearbyDrivers.add({
-            'lat': lat,
-            'long': lng,
-            'nom': nom,
-            'prenom': prenom,
- 'prix': courcePrice,
-          'token': tokench,
+      if (value is Map<dynamic, dynamic>) {
+        Map<dynamic, dynamic> data = value;
+        data.forEach((key, value) {
+          var lat = value['lat'];
+          var lng = value['long'];
+          var nom = value['Nom'];
+          var prenom = value['Prénom'];
+          var availability = value['isAvailable'];
+          var tokench = value['token'];
+          var voiture= value['Modèle'];
+          var occupe=value['occupee'];
+
+
+          // Vérifiez si toutes les valeurs nécessaires sont présentes
+          if (lat != null && lng != null && availability == true && occupe== false ) {
+            double distance = Geolocator.distanceBetween(
+              _currentPosition?.latitude ?? 0.0,
+              _currentPosition?.longitude ?? 0.0,
+              lat,
+              lng,
+            );
+
+            double dis = Geolocator.distanceBetween(
+              _currentPosition?.latitude ?? 0.0,
+              _currentPosition?.longitude ?? 0.0,
+              _destinationposition?.latitude ?? 0.0,
+              _destinationposition?.longitude ?? 0.0,
+            );
+
+            double prix = (distance + dis) / 1000;
+            double prixCource = (prix * 900);
+            int courcePrice = prixCource.toInt();
+         
+
+
+            nearbyDrivers.add({
+              'lat': lat,
+              'long': lng,
+              'nom': nom,
+              'prenom': prenom,
+            
+              'token': tokench,
+              'distance': distance,
+              'prix': courcePrice,
+              'voiture':voiture
+            });
+          }
+        });
+
+        // Triez les conducteurs par distance
+        nearbyDrivers.sort((a, b) => a['distance'].compareTo(b['distance']));
+
+        // Mettez à jour le prix de la course si des conducteurs à proximité sont trouvés
+        if (nearbyDrivers.isNotEmpty) {
+           
+        setState(() {
+          this.courcePrice = nearbyDrivers.first['prix'];
+        });
+
+         
+
+          // Imprimer le prix de la course une seule fois
+          print("Prix de la course: $courcePrice");
+
+          // Mettez à jour le prix dans la base de données Firebase
+          FirebaseDatabase.instance
+              .ref('user')
+              .child(FirebaseAuth.instance.currentUser!.uid)
+              .push().set({
+            'prix': courcePrice,
           });
-    } });}
-  } catch (error) {
-    print("Erreur lors de la récupération des conducteurs: $error");
-  }
+            FirebaseDatabase.instance.ref('trajets').child(FirebaseAuth.instance.currentUser!.uid).push().set({
+  'date_debut': dateFormat,
+  'prix':courcePrice,
+  'monthYear':DateTime.now().month, 
+  'latitude': placeName,
 
-  return nearbyDrivers;
-}
+  'position_arrivee': {
+    'latitude': _destinationposition!.latitude,
+    'longitude': _destinationposition!.longitude,
+  },
+  
+  // Ajoutez d'autres détails du trajet si nécessaire
+});
+        } else {
+          print("Aucun conducteur trouvé à proximité.");
+        }
+      } else {
+        print("Les données récupérées ne sont pas du type attendu.");
+      }
+    } catch (error) {
+      print("Erreur lors de la récupération des conducteurs: $error");
+    }
+
+    return nearbyDrivers;
+  }
 
 
 
@@ -949,6 +1220,9 @@ markersList.add (Marker (markerId: const MarkerId ("1"), position: LatLng (lat, 
 ;
   
   findNearbyDrivers();
+  setState(() {
+    _loadNearbyDrivers();
+  });
  
 
   

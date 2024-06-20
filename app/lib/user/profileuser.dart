@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
 
 class ProfileUser extends StatefulWidget {
   const ProfileUser({super.key});
@@ -12,6 +13,26 @@ class ProfileUser extends StatefulWidget {
 
 class _ProfileUserState extends State<ProfileUser> {
   List datauser = [];
+   void _deleteUserAccount() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      String uid = user.uid;
+
+      // Delete user data from Realtime Database
+      await FirebaseDatabase.instance.ref().child('user').child(uid).remove().then((_) {
+        print('User data deleted from database');
+      }).catchError((error) {
+        print('Failed to delete user data: $error');
+      });
+
+      // Delete user authentication data
+      await user.delete().then((_) {
+        print('User account deleted');
+      }).catchError((error) {
+        print('Failed to delete user account: $error');
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -22,7 +43,16 @@ class _ProfileUserState extends State<ProfileUser> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+        bottomNavigationBar: GNav(tabs: [
+         
+         GButton(            icon: Icons.exit_to_app,
+         text: "Supprimé compte",
+         onPressed: () {
+_deleteUserAccount();
+         },
+),]),
       appBar: AppBar(
+
         title: Text(
           "Votre Profile",
           style: TextStyle(
@@ -32,11 +62,17 @@ class _ProfileUserState extends State<ProfileUser> {
           ),
         ),
         leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+          Navigator.pop(context);
+          },
+        ),
+        actions: [IconButton(
           icon: Icon(Icons.edit),
           onPressed: datauser.isNotEmpty ? () {
             _showUpdateDialog(datauser[0]);
           } : null,
-        ),
+        ),],
       ),
       body: datauser.isNotEmpty ? ListView.builder(
         itemBuilder: (context, i) {
@@ -113,7 +149,7 @@ class _ProfileUserState extends State<ProfileUser> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text("Modifier le profile"),
+        
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

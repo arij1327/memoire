@@ -3,6 +3,7 @@ import 'package:app/authentification/sign_up.dart';
 import 'package:app/chauffeur/detailcource.dart';
 import 'package:app/firebase_options.dart';
 import 'package:app/homepage.dart';
+import 'package:app/language.dart';
 import 'package:app/paymentpaypal.dart';
 import 'package:app/provider.dart';
 import 'package:app/screenpage.dart';
@@ -20,17 +21,20 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:intl/date_symbol_data_file.dart';
 import 'package:provider/provider.dart';
 
- Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print("Handling a background message: ${message.messageId}");
 }
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-   await Firebase.initializeApp (
-        options: DefaultFirebaseOptions.currentPlatform,
-);
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+
+  const AndroidNotificationChannel channel = AndroidNotificationChannel(
     'default_channel_id', // id
     'Default Channel', // name
     description: 'This is the default channel for notifications.', // description
@@ -44,60 +48,62 @@ void main() async {
       .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel);
-await FirebaseAppCheck.instance.activate(
-  androidProvider: AndroidProvider.playIntegrity,
-);
-  Stripe.publishableKey=ApiKeys.publishablekey;
 
-  
-  runApp( 
-      ChangeNotifierProvider(
+  await FirebaseAppCheck.instance.activate(
+    androidProvider: AndroidProvider.playIntegrity,
+  );
+
+  Stripe.publishableKey = ApiKeys.publishablekey;
+
+  runApp(
+    ChangeNotifierProvider(
       create: (context) => DriverNotifier(),
       child: MyApp(),
     ),
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
-  
 
-  void initState(){
-    FirebaseAuth.instance
-  .authStateChanges()
-  .listen((User? user) {
-    if (user == null) {
-      print('=========================================User is currently signed out!');
-    } else {
-      print('User is signed in!');
-    }
-  });
-  
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+
+  @override
+  void initState() {
+    super.initState();
+
+    FirebaseAuth.instance.authStateChanges().listen((User? user) {
+      if (user == null) {
+        print('User is currently signed out!');
+      } else {
+        print('User is signed in!');
+      }
+    });
+
+    
   }
-  // This widget is the root of your application.
+
+  void _onTranslatedLanguage(Locale? locale) {
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-       initialRoute: '/',
+      initialRoute: '/',
       routes: {
-        '/home': (context) =>homepage(),
-      '/login': (context) =>LoginuserPage(),
-            '/detail': (context) =>detailcource(),
-                        '/payment': (context) =>PaymentStripe(),
-       '/detailcource': (context) =>detailcource(),
-
-
-
-
-      
-
-    
+        '/home': (context) => homepage(),
+        '/login': (context) => LoginuserPage(),
+        '/detail': (context) => detailcource(),
+        '/payment': (context) => PaymentStripe(),
+        '/detailcource': (context) => detailcource(),
       },
       home: ScreenPage(),
     );
   }
- 
-
 }
-

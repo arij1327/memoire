@@ -28,14 +28,17 @@ class _DriverProfilePageState extends State<DriverProfilePage> {
   double? currentlat;
   double? currentlong;
   Timer? timer;
+   String? _prenom;
 
   bool _isAvailable = false;
   bool isDialogShown = false;
+  bool _isOccupe = false;
   List data = [];
   final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
    Future<void> sendnotificationcource(title,messagee,token) async{
   String? Id_Driver= FirebaseAuth.instance.currentUser!.uid;
 
+  
   
   
 
@@ -107,6 +110,38 @@ var body = {
   @override
   void initState() {
     super.initState();
+    FirebaseMessaging.onMessageOpenedApp.listen((message) { 
+  if(message.notification!.body == "utilisateur a annulé la course"){
+    Navigator.pop(context);
+  }
+  else if(message.notification!.body =="utilisateur a confirmé la course"){
+     Navigator.pushNamed(context, '/detailcource', arguments: {
+'adress':message.data['adress'],
+'prix':message.data['prix'],
+'token':message.data['token']
+
+                 
+                       
+                        });
+
+  }
+});
+// FirebaseMessaging.onMessage.listen((message) { 
+//   if(message.notification!.body== "utilisateur a annulé la course"){
+//     Navigator.pop(context);
+//   }
+//   else if(message.notification!.body =="utilisateur a confirmé la course"){
+//      Navigator.pushNamed(context, '/detailcource', arguments: {
+// 'adress':message.data['adress'],
+// 'prix':message.data['prix'],
+// 'token':message.data['token']
+
+                 
+                       
+//                         });
+
+//   }
+// });
 
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       _handleMessage(message);
@@ -117,11 +152,13 @@ var body = {
     });
 
     getDataUser();
+    _updateoccupe(false);
+    fetchoccupe();
     fetchAvailability();
     _determinePosition();
   }
 
-  void _handleMessage(RemoteMessage message) {
+  void _handleMessage(RemoteMessage message)async {
        if (message.notification != null) {
       // Fermer toute boîte de dialogue existante avant d'en afficher une nouvelle
         if (isDialogShown) {
@@ -130,18 +167,21 @@ var body = {
     }
     try {
       if (message.notification != null) {
+        
         showDialog(
           context: context,
           
           builder: (context) {
                 isDialogShown = true;
             return AlertDialog(
-              title: Text("Vous avez une cource"),
+              title: Text("Vous avez une course"),
               content: Column(
                 children: [ Text(message.data['adress']),
-                Text(message.data['prix']),
+                                    Text('Destination ${message.data['destination']}'),
+
+                Text('Prix de course ${message.data['prix']}'),
                 //Text(message.data['firstname']),
-                Text(message.data['methode_payment'])],
+                Text('Mode de payment ${message.data['methode_payment']}')],
                 
               ),
               actions: [
@@ -149,42 +189,31 @@ var body = {
                 TextButton(
                   onPressed: () {
                     String token = message.data['token'];
-                    sendnotification("Hello", "Le chauffeur a accepté votre course", token);
-                  // Navigator.push(context, MaterialPageRoute(builder: (context) => detailcource()));
-//                      Navigator.pushNamed(context, '/detailcource', arguments: {
-//                          'id': message.data['id'],
+                    sendnotification("LuxBlack", "Le chauffeur a accepté votre course", token);
+                    Navigator.pop(context);
+                    
+
+//                Navigator.pushNamed(context, '/detailcource', arguments: {
 // 'adress':message.data['adress'],
-// 'payment':message.data['methode_payment'],
 // 'prix':message.data['prix'],
-//'token':message.data['token],
-// 'firstname':message.data['firstname'],
+// 'token':message.data['token']
 
-
-
-                          
+                 
+                       
 //                         });
+                  
                   },
                   child: Text("Accepter"),
                 ),
                 TextButton(
                   onPressed: () {
                     String token = message.data['token'];
-                    sendnotification("Hello", "Le chauffeur a refusé votre course", token);
+                    sendnotification("LuxBlack", "Le chauffeur a refusé votre course", token);
+                    Navigator.pop(context);
                   },
                   child: Text("Refuser"),
                 ),
-                //   TextButton(
-                //   onPressed: () {
-                //     String token = message.data['token'];
-                //     sendnotification("Hello", "Le chauffeur arrive", token);
-                //   },
-                //   child: Text("Arriver"),
-                // ),
-                TextButton(onPressed: (){
-                                      String token = message.data['token'];
-
-                  sendnotificationcource("couce terminé", "couce terminé", token);
-                }, child: Text("cource terminé"))
+              
               ],
             );
           },
@@ -239,8 +268,8 @@ var body = {
       
     },
       "data":{
-   
-
+   'id':id,
+'tok':token1
     }
   }
 };
@@ -267,12 +296,14 @@ var body = {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      home: Scaffold(
+    return  Scaffold(
         bottomNavigationBar: GNav(tabs: [
          
-         
+         GButton(            icon: Icons.exit_to_app,
+         text: "parametre",
+         onPressed: () {
+         },
+),
           GButton(
             icon: Icons.exit_to_app,
             text: "Déconnecter",
@@ -287,7 +318,9 @@ var body = {
                       Navigator.push(context, MaterialPageRoute(builder: (context) => SignupUserPage()));
                       
                     }, child: Text("Ok")),
-                    TextButton(onPressed: () {}, child: Text("Annuler"))
+                    TextButton(onPressed: () {
+                      Navigator.pop(context);
+                    }, child: Text("Annuler"))
                   ],
                 );
               });
@@ -305,7 +338,7 @@ var body = {
                 });
                 await _updateAvailability(newValue);
              await UpdateLocation();
-           //  initPlatformState();
+          
 
               },
               activeColor: Colors.blue,
@@ -331,12 +364,12 @@ var body = {
           },
           itemCount: data.length,
         ),
-      ),
-    );
+      );
   }
 
   Future<void> _determinePosition() async {
     bool serviceEnabled;
+
     LocationPermission permission;
 
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -417,23 +450,24 @@ var body = {
     }
   }
 
+ 
 
 Future<void> UpdateLocation()async {
   // Start the background location service
   BackgroundLocation.startLocationService();
 
-   BackgroundLocation.setAndroidConfiguration(1000);
+  //  BackgroundLocation.setAndroidConfiguration(1000);
 
-    // BackgroundLocation.getLocationUpdates((location) {
-    //   currentlat = location.latitude;
-    //   currentlong = location.longitude;
-    //   Future.delayed(Duration(seconds: 2));
-    //     FirebaseDatabase.instance.ref('position').child(FirebaseAuth.instance.currentUser!.uid).push().set({
-    //       'lat': currentlat,
-    //       'long': currentlong,
-    //     });
+  //   BackgroundLocation.getLocationUpdates((location) {
+  //     currentlat = location.latitude;
+  //     currentlong = location.longitude;
+  //     Future.delayed(Duration(seconds: 2));
+  //       FirebaseDatabase.instance.ref('position').child(FirebaseAuth.instance.currentUser!.uid).push().set({
+  //         'lat': currentlat,
+  //         'long': currentlong,
+  //       });
     
-    // }); 
+  //   }); 
     
    
 StreamSubscription<Position> positionStream = Geolocator.getPositionStream().listen(
@@ -449,6 +483,7 @@ double? currentlong= position.longitude;
     
   }
 
+   
   Future<void> getDataUser() async {
     DatabaseReference ref = FirebaseDatabase.instance.reference().child("position").child(FirebaseAuth.instance.currentUser!.uid);
     DataSnapshot snapshot = await ref.get();
@@ -466,5 +501,59 @@ double? currentlong= position.longitude;
     FirebaseMessaging.instance.onTokenRefresh.listen((token) {
 
      });
+  }
+  
+  Future<void> _updateoccupe(bool occupee) async {
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final String userId = user.uid;
+      try {
+        final DataSnapshot docSnapshot = await FirebaseDatabase.instance
+            .ref('position')
+            .child(userId)
+            .get();
+
+        if (docSnapshot.exists) {
+          await docSnapshot.ref.update({'occupee': occupee});
+          print("User availability updated successfully!");
+        } else {
+          await FirebaseDatabase.instance.ref('position').child(userId).set({
+            'Id_user': userId,
+            'occupee': occupee,
+          });
+          print("User availability added successfully!");
+        }
+      } catch (error) {
+        print("Failed to update user availability: $error");
+      }
+    }
+  }
+
+  Future<void> fetchoccupe() async {
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        final DataSnapshot snapshot = await FirebaseDatabase.instance
+            .ref('position')
+            .child(user.uid)
+            .get();
+
+        if (snapshot.value != null) {
+          final dynamic data = snapshot.value;
+          if (data is Map<dynamic, dynamic>) {
+            final bool isOccupe = data['occupee'] ?? false;
+            setState(() {
+              _isOccupe = isOccupe;
+            });
+          } else {
+            print('Invalid data format in snapshot');
+          }
+        } else {
+          print('Document does not exist in the database');
+        }
+      } catch (error) {
+        print('Failed to get document: $error');
+      }
+    }
   }
 }

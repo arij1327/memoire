@@ -55,30 +55,30 @@ class _SignupPageState extends State<SignupUserPage> {
   String? choosevalue;
   String? choosevalue1;
 
-  checkTaxiNumberExists(String taxiNumber) async {
+ Future<String> checkTaxiNumberExists(String taxiNumber) async {
   print("check taxi");
-    try {
-      DatabaseReference reff = FirebaseDatabase.instance.ref().child('position');
+  try {
+    DatabaseReference reff = FirebaseDatabase.instance.ref().child('position');
 
-      Query queryRef = reff.orderByChild('Numéro du taxi').equalTo(taxiNumber);
+    Query queryRef = reff.orderByChild('Numéro du taxi').equalTo(taxiNumber);
 
-      DatabaseEvent event = await queryRef.once(); 
+    DatabaseEvent event = await queryRef.once();
 
-      DataSnapshot snapshot = event.snapshot;
+    DataSnapshot snapshot = event.snapshot;
 
-      if (snapshot.exists) {
-        print("exist");
-        return 'Ce numéro de taxi existe déjà.';
-        
-      } else {
-        print("non");
-        return 'valid';
-      }
-    } catch (e) {
-      print('Error checking taxi number: $e');
-      return 'error';
+    if (snapshot.exists) {
+      print("exist");
+      print("Snapshot value: ${snapshot.value}");
+      return 'Ce numéro de taxi existe déjà.';
+    } else {
+      print("non");
+      return 'valid';
     }
+  } catch (e) {
+    print('Error checking taxi number: $e');
+    return 'error';
   }
+}
   
 
     // Appel de la fonction checkTaxiNumberExists pour vérifier si le numéro de taxi existe déjà
@@ -93,7 +93,8 @@ class _SignupPageState extends State<SignupUserPage> {
        'Prénom': _prenomController.text.toString(),
        'Numéro du taxi': usernumController.text.toString(),
        'Matricule': usermatController.text.toString(),
-       'Modèle': choosevalue.toString(),
+       'Modèle': choosevalue1.toString(),
+
        
 
        // Add more fields as needed
@@ -133,20 +134,32 @@ class _SignupPageState extends State<SignupUserPage> {
                 children: [
                     Padding(padding: EdgeInsets.only(top :30)),
                   // Ajout des champs pour le prénom et le nom
-                  TextFormField(
-                    controller: _prenomController,
-                    decoration: InputDecoration(labelText: 'Prénom',
-                      border: OutlineInputBorder(
-                               borderRadius: BorderRadius.circular(20),
-                         ),),
-                  ),
-                  SizedBox(height: 12,),
-                  TextFormField(
-                    controller: _userController,
-                    decoration: InputDecoration(labelText: 'Nom',
-                      border: OutlineInputBorder(
-                               borderRadius: BorderRadius.circular(20),
-                         ),),
+                Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _prenomController,
+                          decoration: InputDecoration(
+                            labelText: 'Prénom',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _userController,
+                          decoration: InputDecoration(
+                            labelText: 'Nom',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                                     SizedBox(height: 12,),
 
@@ -229,6 +242,18 @@ class _SignupPageState extends State<SignupUserPage> {
                         value: valueItem,
                       );
                     }).toList(),
+
+                    decoration: InputDecoration(
+                                labelText: 'Statut ',
+                                labelStyle: TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
                   ),
                                     SizedBox(height: 12,),
 
@@ -302,7 +327,7 @@ class _SignupPageState extends State<SignupUserPage> {
                       }).toList(),
                     ),
                   ],
-                                    SizedBox(height: 12,),
+                                    SizedBox(height: 30,),
 
                   // Bouton pour s'inscrire
                   ElevatedButton(
@@ -369,13 +394,15 @@ class _SignupPageState extends State<SignupUserPage> {
                       
                     },
                      style: ElevatedButton.styleFrom(
-             minimumSize: Size(250, 30)
+             minimumSize: Size(250, 50),
+               backgroundColor: Colors.white60,
                        ),
+                       
                     child: Text("S'inscrire",style: TextStyle(color: Colors.black),),
                   ),
-        
+        SizedBox(height: 50,),
                    Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
                                   Text("Avez vous un compte?"),
                                   SizedBox(width: 5),
