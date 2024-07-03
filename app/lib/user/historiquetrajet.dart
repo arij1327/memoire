@@ -25,55 +25,70 @@ class _HistoriqueState extends State<Historique> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Historique de votre trajet"),
-      ),
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('asset/historique.jpeg'), 
-            fit: BoxFit.cover,
+      body: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('asset/historique.jpeg'),
+                fit: BoxFit.cover,
+              ),
+            ),
           ),
-        ),
-        child: StreamBuilder(
-          stream: _databaseReference.onValue,
-          builder: (BuildContext context, AsyncSnapshot snapshot) {
-            if (snapshot.hasError) {
-              return Center(child: Text('Error'));
-            }
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
-            }
+          Column(
+            children: [
+              PreferredSize(
+                preferredSize: Size.fromHeight(kToolbarHeight),
+                child: AppBar(
+                  backgroundColor: Colors.transparent,
+                  elevation: 0,
+                  title: Text("Historique de votre trajet"),
+                ),
+              ),
+              Expanded(
+                child: StreamBuilder(
+                  stream: _databaseReference.onValue,
+                  builder: (BuildContext context, AsyncSnapshot snapshot) {
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error'));
+                    }
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    }
 
-            return ListView.builder(
-              itemCount: datatrajet.length,
-              itemBuilder: (context, index) {
-                final trajet = datatrajet[index];
-                final latitude = trajet['latitude']?.toString() ?? '';
-                final dateDebut = trajet['date_debut']?.toString() ?? '';
-                final prix = trajet['prix']?.toString() ?? '';
-                return ListTile(
-                  leading: Icon(Icons.taxi_alert),
-                  title: Text(latitude),
-                  subtitle: Text(dateDebut),
-                  trailing: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: 80),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Flexible(
-                          child: Text(prix, overflow: TextOverflow.ellipsis),
-                        ),
-                        SizedBox(width: 4),
-                        Text("TND"),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            );
-          },
-        ),
+                    return ListView.builder(
+                      itemCount: datatrajet.length,
+                      itemBuilder: (context, index) {
+                        final trajet = datatrajet[index];
+                        final latitude = trajet['latitude']?.toString() ?? '';
+                        final dateDebut = trajet['date_debut']?.toString() ?? '';
+                        final prix = trajet['prix']?.toString() ?? '';
+                        return ListTile(
+                          leading: Icon(Icons.taxi_alert),
+                          title: Text(latitude),
+                          subtitle: Text(dateDebut),
+                          trailing: ConstrainedBox(
+                            constraints: BoxConstraints(maxWidth: 80),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Flexible(
+                                  child: Text(prix, overflow: TextOverflow.ellipsis),
+                                ),
+                                SizedBox(width: 4),
+                                Text("TND"),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

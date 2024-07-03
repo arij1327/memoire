@@ -13,7 +13,8 @@ class ProfileUser extends StatefulWidget {
 
 class _ProfileUserState extends State<ProfileUser> {
   List datauser = [];
-   void _deleteUserAccount() async {
+  
+  void _deleteUserAccount() async {
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       String uid = user.uid;
@@ -43,81 +44,128 @@ class _ProfileUserState extends State<ProfileUser> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        bottomNavigationBar: GNav(tabs: [
-         
-         GButton(            icon: Icons.exit_to_app,
-         text: "Supprimé compte",
-         onPressed: () {
-_deleteUserAccount();
-         },
-),]),
-      appBar: AppBar(
-
-        title: Text(
-          "Votre Profile",
-          style: TextStyle(
-            fontStyle: FontStyle.italic,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            'asset/user.jpeg',
+            fit: BoxFit.fill,
           ),
-        ),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () {
-          Navigator.pop(context);
-          },
-        ),
-        actions: [IconButton(
-          icon: Icon(Icons.edit),
-          onPressed: datauser.isNotEmpty ? () {
-            _showUpdateDialog(datauser[0]);
-          } : null,
-        ),],
-      ),
-      body: datauser.isNotEmpty ? ListView.builder(
-        itemBuilder: (context, i) {
-          return Column(
+          SizedBox(height: 20,),
+          Column(
             children: [
-              SizedBox(height: 50),
-              CircleAvatar(
-                child: Icon(Icons.person),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    datauser[i]['Nom'],
-                    style: TextStyle(fontSize: 25),
-                  ),
-                  SizedBox(width: 8),
-                  // Uncomment the following line if you also want to display "Prénom"
-                  // Text(datauser[i]['Prénom'], style: TextStyle(fontSize: 25)),
-                ],
-              ),
-              SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.only(left: 20),
-                child: Row(
-                  children: [
-                    Icon(
-                      FontAwesomeIcons.envelope,
-                      size: 30,
-                      color: Colors.black,
-                    ),
-                    SizedBox(width: 20),
-                    Text(
-                      datauser[i]['email'],
-                      style: TextStyle(fontSize: 20),
-                    ),
-                  ],
+              AppBar(
+               
+                leading: IconButton(
+                  icon: Icon(Icons.arrow_back),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
                 ),
+                actions: [
+                  IconButton(
+                    icon: Icon(Icons.edit),
+                    onPressed: datauser.isNotEmpty
+                        ? () {
+                            _showUpdateDialog(datauser[0]);
+                          }
+                        : null,
+                  ),
+                ],
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+              ),
+              SizedBox(height: 20,),
+              Expanded(
+                child: datauser.isNotEmpty
+                    ? ListView.builder(
+                        itemBuilder: (context, i) {
+                          return Column(
+                            children: [
+                              SizedBox(height: 50),
+                              CircleAvatar(
+                                backgroundColor: Colors.black,
+                                child: Icon(Icons.person, color: Colors.white,),
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    datauser[i]['Nom'],
+                                    style: TextStyle(fontSize: 25),
+                                  ),
+                                  SizedBox(width: 8),
+                                  // Uncomment the following line if you also want to display "Prénom"
+                                  // Text(datauser[i]['Prénom'], style: TextStyle(fontSize: 25)),
+                                ],
+                              ),
+                              SizedBox(height: 20),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 20),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      FontAwesomeIcons.envelope,
+                                      size: 30,
+                                      color: Colors.black,
+                                    ),
+                                    SizedBox(width: 20),
+                                    Text(
+                                      datauser[i]['email'],
+                                      style: TextStyle(fontSize: 20),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                                SizedBox(height: 20),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 20),
+                      child: Row(
+                        children: [
+                          Icon(
+                            FontAwesomeIcons.phone,
+                            size: 25,
+                            color: Colors.black,
+                          ),
+                          SizedBox(width: 20),
+                      
+                          Text(
+                            datauser[i]['phone'],
+                            style: TextStyle(fontSize: 20, color: Colors.black),
+                          ),
+                        ],
+                      ),
+                    ),
+                            ],
+                          );
+                        },
+                        itemCount: datauser.length,
+                      )
+                    : Center(child: CircularProgressIndicator()),
               ),
             ],
-          );
-        },
-        itemCount: datauser.length,
-      ) : Center(child: CircularProgressIndicator()),
-    );
+          ),
+        ],
+      ),
+      bottomNavigationBar: 
+       Container(
+    decoration: BoxDecoration(
+      image: DecorationImage(
+        image: AssetImage('asset/chaufff.jpeg'),
+        fit: BoxFit.cover,
+      ),
+    ),
+      child: 
+      GNav(tabs: [
+        GButton(
+          icon: Icons.exit_to_app,
+          text: "Supprimé compte",
+          onPressed: () {
+            _deleteUserAccount();
+          },
+        ),
+      ]),
+    ));
   }
 
   Future<void> getDataUser() async {
@@ -149,7 +197,6 @@ _deleteUserAccount();
       context: context,
       builder: (context) {
         return AlertDialog(
-        
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

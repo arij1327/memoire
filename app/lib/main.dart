@@ -54,6 +54,7 @@ void main() async {
   );
 
   Stripe.publishableKey = ApiKeys.publishablekey;
+ Stripe.instance.applySettings(); 
 
   runApp(
     ChangeNotifierProvider(
@@ -103,7 +104,7 @@ class _MyAppState extends State<MyApp> {
         '/payment': (context) => PaymentStripe(),
         '/detailcource': (context) => detailcource(),
       },
-      home: ScreenPage(),
+      home:ScreenPage() ,
     );
   }
 }

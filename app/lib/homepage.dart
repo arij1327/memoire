@@ -23,7 +23,7 @@ import 'package:firebase_database/firebase_database.dart';
      return Scaffold(
         body: Container(
          decoration: BoxDecoration(
-           image: DecorationImage(image: AssetImage("asset/home.jpeg"),
+           image: DecorationImage(image: AssetImage("asset/pagehome.jpeg"),
            fit: BoxFit.fill)
          ),
           child: Center(

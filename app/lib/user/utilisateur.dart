@@ -1,6 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+import 'package:app/access_token.dart';
+import 'package:flutter/material.dart';
 import 'package:app/a%20propos.dart';
 import 'package:app/getpointpolyline.dart';
 import 'package:app/homepage.dart';
@@ -17,9 +21,12 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:googleapis_auth/auth_io.dart';
+import 'package:googleapis_auth/googleapis_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_address_from_latlng/flutter_address_from_latlng.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
@@ -35,6 +42,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:googleapis_auth/auth_io.dart';
 import 'package:http/http.dart' as http;
 import 'package:app/constant.dart';
+import 'package:googleapis_auth/auth_io.dart' as auth;
 import 'package:provider/provider.dart';
 import 'package:rating_dialog/rating_dialog.dart';
 
@@ -53,12 +61,62 @@ class InterfacePage extends StatefulWidget  {
 class _InterfacePageState extends State<InterfacePage>  with SingleTickerProviderStateMixin{
   String? _placeName;
   double average =0.0;
+ static String? _accessToken;
+
+
  
 String? methodepayment;
  
 double searchwidth=400;
 bool isLoding=true;
  
+static Future<String> getAccessToken() async {
+  // Vérifier si nous avons déjà un jeton d'accès valide en mémoire
+  if (_accessToken != null) {
+    return _accessToken!;
+  }
+
+  // Obtenir un nouveau jeton d'accès
+  final serviceAccountJson = {
+    "type": "service_account",
+    "project_id": "apptaxi-89d1b",
+    "private_key_id": "2c6aeee8ecbd561ec229e9a3c0b63a20e6404a15",
+    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDBcTLwC5uxqeyE\nTh+nYh20ie5lozVugmBkp1RihZXgV5+E+rKh3WTU2q7FnD99pUHnRzY/f+6tEc64\n6/gCmMnU+yrVKGgSa6IAEjnHUtmoRYZ92cwViArk306IUzG66jV/7J7MI1wLBDvf\nubx8b64LxTlKbIvqjxdUGNe2XYl+9gyIghs3uqERVqvBLtua5ArJXpxVf1Vvw93B\nccfNRRrVybqs5MZxSsxAsaQM30xEUbPMIricEVjmi22TY/KTTh/p1kMLDPc1lQqh\nc8YQmCI8LnnyXudmGQeDxQo40aH/w3w4xRkIVOmvqGomMO+Bhejq+adv8G+6w6+l\nOFqBZ54ZAgMBAAECggEAM9FSb0n0wXE+yawxv4FBatC9+xzunbUwBBZsvN2C6e8e\n7JzJSCHJtlkEEyxJN6uSjVUem4D2GwdXpGKVc4ChJDvJ3AKwairJ4RIAxzuS0Yga\nQFEc4bGpFWkaHNuISUUe4q8sVIuuRscyELqs2nqCGWYR9DVCf6kn+x+SfSfuQoNH\n8AafCL62S9xSIVGWIsKZcB8L16IWTJF00YYKPxcffEOPa9ZFxMevBytNpRYvBt15\nsjqPh6oggtfGRcngtTruYrPrPWQ9Ex2LxkyZ1ZrnEanMETgH78pdfmWU8MfFHjv0\ne2Ds3+/CdS+Rs7fiGPE77hFSKM4bcI2stoKNwL99HwKBgQDyEw1jtkfnS+kQBpjV\n+6rHB1pFT089NPtEJN09s/wDpIT76Pw5hyzWGqJ4Tkrh8YSBgsqF7fTOvoO1VnQS\nim54efvwIiE0cxY4s82smL4ufEOKObrnYgcQe2ZUZGVTfAD6XtC8uM4hfrWvhQ9W\nZRmlMJ6nFTvO31y8M1+J0IMdgwKBgQDMkfTK4VaCHeAjVcwQkXgY1sDU445OA6bB\nkUfvP0Y9F/P01ojUnXN/N6Xjou8lF9hdl9DIYQUNYhXkWx7He9ay5Yyz9xwfoSEX\n/6cLnocMkV2YB7vVJX7ppG3MTZs9y8YGlQZ1+kEfr5pAnWs2XLCOMgslL/uW9Atr\nzfWnu2y/MwKBgQDa8NRpXNHHpmaSsgTFdKtO+51vln2qdCLVzSm0xvamLMSCOoT1\nWwb4VnqfqOAdXp1jrXGSlFeYLcNd3WV5525m1J1C4Pt7PqPYgPcCpdtMm+NSP0iG\nQaj2BUXWCj+CtGMGD39nURZOQRX+O7BViXcaatDzeUbwoiBzr1s3gDk2FQKBgQCf\n+ihYHB5dxOVKXMcn0cr8ibzk/0uDAOIAkA+ULoRMNJYoSzlYJAV1YFxPh1TDSkF+\n98FjYlPkImeCXCvWzqaY4mDFQCLzLTvHG7tTn9Z24psx0CJ4zkjQiDEBS1Ny4Q9s\niFA0JM+W6umTTEfSjGvZ15LVsw9p/lGMLdXFJRIm9wKBgQCFFl3whWaIxsmwbbWn\n4WUkTeGuPNIDXxdPc8WNk3NQvf3eKlMCjM9uUNsADb3HDV3qGYMZe9JQEjnH8wFd\nLnnKeOqObFRBInLtAtyCOC/QxshPB5Xn8kR8APv1JZ3q1pU3VHbzJUnykyfs/8Jp\nQFrDHrWkwOqLjVM2nKtwd0KKfw==\n-----END PRIVATE KEY-----\n",
+    "client_email": "apptaxi-89d1b@appspot.gserviceaccount.com",
+    "client_id": "106201903903504776927",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/apptaxi-89d1b%40appspot.gserviceaccount.com",
+    "universe_domain": "googleapis.com"
+  };
+
+  List<String> scopes = [
+    "https://www.googleapis.com/auth/userinfo.email",
+    "https://www.googleapis.com/auth/firebase.database",
+    "https://www.googleapis.com/auth/firebase.messaging"
+  ];
+
+  http.Client client = await auth.clientViaServiceAccount(
+    auth.ServiceAccountCredentials.fromJson(serviceAccountJson),
+    scopes,
+  );
+
+  // Obtenir le jeton d'accès
+  auth.AccessCredentials credentials = await auth.obtainAccessCredentialsViaServiceAccount(
+    auth.ServiceAccountCredentials.fromJson(serviceAccountJson),
+    scopes,
+    client
+  );
+
+  // Fermer le client HTTP
+  client.close();
+
+  // Retourner le jeton d'accès
+  _accessToken = credentials.accessToken.data;
+  print(_accessToken);
+  return _accessToken!;
+}
 Future<Object> _determinePosition() async {
   bool serviceEnabled;
   LocationPermission permission;
@@ -316,7 +374,7 @@ bool destinationChosen = false;
                         icon: Icon(Icons.cancel_outlined),
                         onPressed: () {
                          Navigator.pop(context);
-                         sendnotification("Annulation du course ","utilisateur a annulé la course ", message.data['id']);
+                         sendnotification("Annulation du course","utilisateur a annulé la course ", message.data['id']);
                          repeatSearchDestination();
                         },
                       ),
@@ -465,7 +523,7 @@ FirebaseMessaging.onMessage.listen((message)async {
        
                         if (selectedMethodePayment == "Stripe") {
    Navigator.pushNamed(context, '/payment', arguments: {
-                         'id': message.data['identifiant']
+                         'id': message.data['id']
                           
                         });
 
@@ -594,7 +652,8 @@ FirebaseMessaging.onMessage.listen((message)async {
     child: Column(
       children: [
         ListTile(
-          leading: CircleAvatar(child: Icon(Icons.person)),
+          leading: CircleAvatar(backgroundColor: Colors.black,
+            child: Icon(Icons.person,color: Colors.white,)),
           title: _buildUserList(),
           onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileUser()));
@@ -629,8 +688,9 @@ FirebaseMessaging.onMessage.listen((message)async {
   body:  Stack(
     children: [
       GoogleMap(
-        markers: markersList,
-        polylines: polylineSet,
+         
+        markers: markersList = Set<Marker>.of(markersList),
+        polylines: polylineSet = Set<Polyline>.of(polylineSet),
         zoomControlsEnabled: false,
         myLocationButtonEnabled: true,
         initialCameraPosition: CameraPosition(
@@ -643,6 +703,8 @@ FirebaseMessaging.onMessage.listen((message)async {
           });
         },
       ),
+          
+
       Positioned(
         top: 40,
         left: 30,
@@ -748,7 +810,7 @@ FirebaseMessaging.onMessage.listen((message)async {
         return Column(
           children: [
             ListTile(
-              leading: Image.asset("asset/logotaxi.jpg", width: 80),
+              leading: Image.asset("asset/ta.png", width: 80),
               title: Row(
                 children: [
                   Text(driver['nom']),
@@ -814,8 +876,12 @@ FirebaseMessaging.onMessage.listen((message)async {
                           ),
                           actions: <Widget>[
                             TextButton(
-                              onPressed: () {
-                                sendnotification("hello", "notification", driver['token']);
+                              onPressed: ()async {
+                             
+                               sendnotification("LuxBlack", "vous avez une notification", driver['token']);
+                            //   PushNotificationService.sendFCMMessage( targetDeviceToken: driver['token'],
+  //title: 'Titre de la notification',
+  //body: 'Corps de la notification',);
                                 Navigator.pop(context);
                               },
                               child: Text("Confirmer"),
@@ -827,7 +893,7 @@ FirebaseMessaging.onMessage.listen((message)async {
                   },
                 );
               },
-              child: Text('Envoyer Notification'),
+              child: Text('Envoyer Notification',style: TextStyle(color: Colors.black),),
             ),
           ],
         );
@@ -906,37 +972,28 @@ Future getdestination()async{
   longitude: _destinationposition!.longitude,
   googleApiKey: "AIzaSyC7ckSip1a_oVGM1y7nPSWGUdTEPbkANIA",);
   return destination;
-}
+} Future<void> sendnotification(
 
-
-  Future<void> sendnotification(title,messagee,token) async{
+   title,
+    body,
+   targetDeviceToken,
+) async {
+  final String serverKey = await getAccessToken();
+  final String fcmEndpoint = 'https://fcm.googleapis.com/v1/projects/apptaxi-89d1b/messages:send';
+  final currentFCMToken = await FirebaseMessaging.instance.getToken();print(currentFCMToken);
  var formattedAddress = await getAdress();
  var destination= await getdestination();
  String? methodepayment=selectedMethodePayment;
-  
-  //var firstname= await getDataofUser();
-
-  
-  
- var headersList = {
-
- 'Accept': '*/*',
- 'Content-Type': 'application/json',
- 'Authorization': 
- 'key=AAAAnjSkllc:APA91bEHbLsmo9hyqylkEfBp1f0YYCjKfo6K6mQbB61Th1yYliWw0bvvnsLv05dJC_PIVsk4AX4_z8B6thDi8_8otTFdKV1Te6mnL1txjyhgZ7pGwTkMvg91i5Obp3kh64ah93d9KD4d' 
-};
-var url = Uri.parse('https://fcm.googleapis.com/fcm/send');
-
   String? token1 = await FirebaseMessaging.instance.getToken();
 
-var body = {
-  "to": token,
-  "notification": {
-    "title":title,
-    "body":messagee ,
-    
-  },
-  "data":{
+  final Map<String, dynamic> message = {
+    'message': {
+      'token': targetDeviceToken,
+      'notification': {
+        'body': body,
+        'title': title
+      },
+      "data":{
      "token":token1,
    "adress": formattedAddress,
    "destination":destination,
@@ -945,24 +1002,29 @@ var body = {
 //   "firstname":firstname
 
     }
-};
+    }
+  };
 
-var req = http.Request('POST', url);
-req.headers.addAll(headersList);
-req.body = json.encode(body);
+  try {
+    final http.Response response = await http.post(
+      Uri.parse(fcmEndpoint),
+      headers: <String, String>{
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $serverKey',
+      },
+      body: jsonEncode(message),
+    );
 
-
-var res = await req.send();
-final resBody = await res.stream.bytesToString();
-
-if (res.statusCode >= 200 && res.statusCode < 300) {
-  print(resBody);
+    if (response.statusCode == 200) {
+      print('FCM message sent successfully');
+    } else {
+      print('Failed to send FCM message: ${response.statusCode}');
+      print('Response body: ${response.body}');
+    }
+  } catch (e) {
+    print('Error sending FCM message: $e');
+  }
 }
-else {
-  print(res.reasonPhrase);
-}
-}
-
 getAddressFromCoordinates()async{
    Position position= await Geolocator.getCurrentPosition();
    String formattedAddress = await FlutterAddressFromLatLng().getFormattedAddress(
@@ -1059,7 +1121,7 @@ String? placeName = firstPlacemark.name;
           FirebaseDatabase.instance
               .ref('user')
               .child(FirebaseAuth.instance.currentUser!.uid)
-              .push().set({
+              .update({
             'prix': courcePrice,
           });
             FirebaseDatabase.instance.ref('trajets').child(FirebaseAuth.instance.currentUser!.uid).push().set({
@@ -1268,11 +1330,17 @@ PolylinePoints polylinePoints = PolylinePoints();
 
   // Ajouter le marqueur de durée
   if (polylineCo.length > 1) {
+    LatLng midPoint = LatLng(
+  (polyline.points.first.latitude + polyline.points.last.latitude) / 2,
+  (polyline.points.first.longitude + polyline.points.last.longitude) / 2,
+);
     var durationText =
 responseBody['routes'][0]['legs'][0]['duration']['text'];
+BitmapDescriptor customIcon = await createCustomMarkerBitmap(durationText);
     Marker durationMarker = Marker(
-      markerId: MarkerId("1"),
-    position: LatLng(_destinationposition!.latitude, _destinationposition!.longitude),
+       markerId: MarkerId("duration"),
+      icon: customIcon,
+    position: midPoint,
       infoWindow: InfoWindow(
         title: 'Duration',
         snippet: durationText,
@@ -1298,7 +1366,43 @@ print('Duration Text: $durationText');
   }
 }
 
- static Future<void>makePayment(int amount,String currency)async{
+Future<BitmapDescriptor> createCustomMarkerBitmap(String duration) async {
+  final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+  final Canvas canvas = Canvas(pictureRecorder);
+  final double size = 120;
+  final double circleSize = 80;
+  final double arrowSize = 40;
+
+  // Dessinez le cercle vert
+  final Paint circlePaint = Paint()..color = Colors.green;
+  canvas.drawCircle(Offset(size/2, circleSize/2), circleSize/2, circlePaint);
+
+  // Ajoutez le texte de durée
+  final textPainter = TextPainter(
+    text: TextSpan(
+      text: duration,
+      style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+    ),
+    textDirection: ui.TextDirection.ltr,
+    textAlign: TextAlign.center,
+  );
+  textPainter.layout();
+  textPainter.paint(canvas, Offset((size - textPainter.width) / 2, (circleSize - textPainter.height) / 2));
+
+  // Dessinez la flèche verte
+  final Path path = Path();
+  path.moveTo(size/2, circleSize);
+  path.lineTo(size/2 - arrowSize/2, circleSize + arrowSize/2);
+  path.lineTo(size/2 + arrowSize/2, circleSize + arrowSize/2);
+  path.close();
+  canvas.drawPath(path, circlePaint);
+
+  final ui.Image image = await pictureRecorder.endRecording().toImage(size.toInt(), (size + arrowSize/2).toInt());
+  final ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+  
+  return BitmapDescriptor.fromBytes(byteData!.buffer.asUint8List());
+}
+   static Future<void>makePayment(int amount,String currency)async{
     try {
       String clientSecret=await _getClientSecret((amount*100).toString(), currency);
       await _initializePaymentSheet(clientSecret);
@@ -1312,7 +1416,7 @@ print('Duration Text: $durationText');
     await Stripe.instance.initPaymentSheet(
       paymentSheetParameters: SetupPaymentSheetParameters(
         paymentIntentClientSecret: clientSecret,
-        merchantDisplayName: "arij",
+        merchantDisplayName: "Basel",
       ),
     );
   }

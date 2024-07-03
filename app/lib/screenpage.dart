@@ -14,7 +14,7 @@ class ScreenPage extends StatelessWidget {
          Container(
           decoration: BoxDecoration(
             image: DecorationImage(
-              image: AssetImage("asset/splachsceen.jpeg"),
+              image: AssetImage("asset/screen.jpeg"),
               fit: BoxFit.fill,
             ),
           ),
